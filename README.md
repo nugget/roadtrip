@@ -18,6 +18,27 @@ This package was created by David "nugget" McNett and is not official or support
 Darren Stone. Please don't bother the app developer with questions or feedback about this
 package.
 
+
+## Known Issues
+
+### Only supports language "en"
+
+The top section of each Road Trip CSV data file contains a block that
+advertises the file's version, language, and CSV delimeter values. This package
+has only been tested on english language data files. It relies on section
+header names in the data file to distinguish data blocks and it's feasible that
+these header strings change if you're running Road Trip in a different base
+language. Additionally, no attempt is made to parse and utilize the delimeter
+characters in the file info block.
+
+<details>
+<summary>Example data file header section</summary>
+ROAD TRIP CSV ",."
+Version,Language
+1500,en
+</details>
+
+
 ## Installation
 
 `go get -u github.com/nugget/roadtrip`

@@ -102,8 +102,8 @@ func (rt *CSV) Section(sectionHeader string) (outbuf []byte) {
 
 	sectionStart := make(map[string]int)
 
-	for index, element := range csvHeaders {
-		i := bytes.Index(rt.Raw, []byte(csvHeaders[index]))
+	for index, element := range Sections {
+		i := bytes.Index(rt.Raw, []byte(Sections[index]))
 		sectionStart[element] = i
 
 		slog.Debug("Section Start detected",

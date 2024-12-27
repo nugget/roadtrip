@@ -7,7 +7,18 @@ import (
 	"log/slog"
 )
 
-var csvHeaders = []string{
+const (
+	// Road Trip data file version number supported by this package
+	SupportedVersion int64 = 1500
+)
+
+// Each Road Trip "CSV" file is actually multiple blocks of CSV data delimeted by
+// two newlines and a section header string in all capital letters.
+//
+// Sections contains a slice of strings corresponding to each of the section
+// headers found in the Road Trip data file. Currently this package only supports
+// Language "en" (see known issues in the README.md file)
+var Sections = []string{
 	"FUEL RECORDS",
 	"MAINTENANCE RECORDS",
 	"ROAD TRIPS",
