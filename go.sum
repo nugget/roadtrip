@@ -15,7 +15,5 @@ github.com/tiendc/go-rflutil v0.0.0-20231112145832-693b7b74d697 h1:BYWZUvxBkpnlC
 github.com/tiendc/go-rflutil v0.0.0-20231112145832-693b7b74d697/go.mod h1:nSMBac9C+G4b8nvxSgPZ0rmhrLonJ5ZdknynSKxQhL8=
 github.com/tiendc/gofn v1.11.0 h1:rjXJ2tZ6L96ICwBkbVv0ubDOvrGRo1QMXhhq90xZTBw=
 github.com/tiendc/gofn v1.11.0/go.mod h1:uevHlES37QrasSvoZxBUcooejk7QfvBCfrJ809b+giA=
-golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67 h1:1UoZQm6f0P/ZO0w1Ri+f+ifG/gXhegadRdwBIXEFWDo=
-golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67/go.mod h1:qj5a5QZpwLU2NLQudwIN5koi3beDhSAlJwa67PuM98c=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
 gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
