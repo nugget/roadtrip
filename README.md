@@ -1,12 +1,22 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/nugget/roadtrip.svg)](https://pkg.go.dev/github.com/nugget/roadtrip)
 
-[Road Trip](https://darrensoft.ca/roadtrip/) is the fastest and easiest way to keep track of your car’s fuel economy, maintenance schedule, and expenses on your iPhone, iPod touch, and iPad. This module is the fastest and easiest way to interact with the data captured and maintained by the Road Trip app in your Go project.
+[Road Trip](https://darrensoft.ca/roadtrip/) is an iOS application written by
+Darren Stone. This Go package provides methods and functions for reading and
+parsing the backup files created by Road Trip so that you can work with this
+data in your Go applications. Where possible it transforms the underlying 
+Road Trip data into Go native data types and structures.
 
-### Road Trip MPG
+Road Trip itself supports native syncing of data between iOS devices via iCloud 
+or Dropbox sync folders and the most convenient use of this package is to reference
+a local, live updating copy of this sync directory on your device/host.
 
-Road Trip MPG is an iOS app written by Darren Stone.
+The roadtrip package is strictly read-only and does not allow for the creation of
+new records to be pushed into the Road Trip app's data. It's safe to run against your
+production/live sync files without harm.
 
-* https://darrensoft.ca/roadtrip/
+This package was created by David "nugget" McNett and is not official or supported by
+Darren Stone. Please don't bother the app developer with questions or feedback about this
+package.
 
 ## Installation
 
@@ -16,3 +26,4 @@ Road Trip MPG is an iOS app written by Darren Stone.
 ## Links
 
 - [Road Trip MPG iOS App](https://darrensoft.ca/roadtrip/)
+- [Package Source](https://github.com/nugget/roadtrip)
