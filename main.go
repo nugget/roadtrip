@@ -3,12 +3,11 @@ package roadtrip
 import (
 	"bytes"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
 	"github.com/tiendc/go-csvlib"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type CSV struct {
@@ -66,34 +65,35 @@ func (rt *CSV) LoadFile(filename string) error {
 		return fmt.Errorf("Valuations: %w", err)
 	}
 
-	log.WithFields(log.Fields{
-		"filename":          rt.Filename,
-		"bytes":             len(buf),
-		"vehicleRecords":    len(rt.Vehicle),
-		"fuelRecords":       len(rt.FuelRecords),
-		"mainteanceRecords": len(rt.MaintenanceRecords),
-		"roadTrips":         len(rt.RoadTrips),
-		"tireLogs":          len(rt.TireLogs),
-		"valuations":        len(rt.Valuations),
-	}).Info("Loaded Road Trip CSV")
+	slog.Info("Loaded Road Trip CSV",
+		"filename", rt.Filename,
+		"bytes", len(buf),
+		"vehicleRecords", len(rt.Vehicle),
+		"fuelRecords", len(rt.FuelRecords),
+		"mainteanceRecords", len(rt.MaintenanceRecords),
+		"roadTrips", len(rt.RoadTrips),
+		"tireLogs", len(rt.TireLogs),
+		"valuations", len(rt.Valuations),
+	)
 
 	return nil
 }
 
 func (rt *CSV) Section(sectionHeader string) (outbuf []byte) {
-	log.WithFields(log.Fields{
-		"sectionHeader": sectionHeader,
-	}).Trace("Fetching Section from Raw")
+	slog.Debug("Fetching Section from Raw",
+		"sectionHeader", sectionHeader,
+	)
 
 	sectionStart := make(map[string]int)
 
 	for index, element := range HEADERS {
 		i := bytes.Index(rt.Raw, []byte(HEADERS[index]))
 		sectionStart[element] = i
-		log.WithFields(log.Fields{
-			"element":      element,
-			"sectionStart": i,
-		}).Trace("Section Start detected")
+
+		slog.Debug("Section Start detected",
+			"element", element,
+			"sectionStart", i,
+		)
 	}
 
 	startPosition := sectionStart[sectionHeader]
@@ -110,12 +110,12 @@ func (rt *CSV) Section(sectionHeader string) (outbuf []byte) {
 
 	outbuf = rt.Raw[startPosition:endPosition]
 
-	log.WithFields(log.Fields{
-		"sectionHeader": sectionHeader,
-		"startPosition": startPosition,
-		"endPosition":   endPosition,
-		"sectionBytes":  len(outbuf),
-	}).Trace("Section Range calculated")
+	slog.Debug("Section Range calculated",
+		"sectionHeader", sectionHeader,
+		"startPosition", startPosition,
+		"endPosition", endPosition,
+		"sectionBytes", len(outbuf),
+	)
 
 	return
 }
@@ -133,10 +133,10 @@ func ParseDate(dateString string) (t time.Time) {
 	if err != nil {
 		t, err = time.Parse("2006-1-2", dateString)
 		if err != nil {
-			log.WithFields(log.Fields{
-				"error":      err,
-				"dateString": dateString,
-			}).Debug("Can't parse Road Trip date string")
+			slog.Debug("Can't parse Road Trip date string",
+				"error", err,
+				"dateString", dateString,
+			)
 		}
 	}
 

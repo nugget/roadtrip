@@ -5,7 +5,7 @@ package roadtrip
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 )
 
 var HEADERS = []string{
@@ -48,17 +48,17 @@ type Fuel struct {
 	TankNumber   int     `csv:"Tank Number,omitempty"`
 }
 
-func (f *Fuel) Comparator() string {
-	return fmt.Sprintf("%07d", int64(f.Odometer))
+func (f Fuel) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Float64("odometer", f.Odometer),
+		slog.String("date", f.Date),
+		slog.String("location", f.Location),
+		slog.Float64("totalPrice", f.TotalPrice),
+	)
 }
 
-func (f *Fuel) Logrus() *log.Entry {
-	return log.WithFields(log.Fields{
-		"odometer":   f.Odometer,
-		"date":       f.Date,
-		"location":   f.Location,
-		"totalPrice": f.TotalPrice,
-	})
+func (f *Fuel) Comparator() string {
+	return fmt.Sprintf("%07d", int64(f.Odometer))
 }
 
 // MAINTENANCE RECORDS
