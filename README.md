@@ -33,9 +33,11 @@ characters in the file info block.
 
 <details>
 <summary>Example data file header section</summary>
+```
 ROAD TRIP CSV ",."
 Version,Language
 1500,en
+```
 </details>
 
 

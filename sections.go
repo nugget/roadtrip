@@ -27,11 +27,11 @@ var Sections = []string{
 	"VALUATIONS",
 }
 
-// A Fuel is a single fuel record from the underlying Road Trip data file and
-// represents a single vehicle fuel fillup and all of its associated
+// A Fuel object is a single fuel record from the underlying Road Trip data
+// file and represents a single vehicle fuel fillup and all of its associated
 // attributes.
 //
-// It is embodied in the data file as a single CSV record in the FUEL RECORDS
+// A file will contain zero or more Fuel records in the FUEL RECORDS
 // section of the file.
 type Fuel struct {
 	Odometer     float64 `csv:"Odometer (mi)"`
@@ -82,7 +82,12 @@ func (f *Fuel) Comparator() string {
 	return fmt.Sprintf("%07d", int64(f.Odometer))
 }
 
-// MAINTENANCE RECORDS
+// A Maintence object is a single record from the Road Trip data file and
+// represents a single vehicle maintenance activity with all of its associated
+// attributes.
+//
+// A file will contain zero or more Maintenance records in the ROAD TRIPS
+// section of the file.
 type Maintenance struct {
 	Description          string  `csv:"Description"`
 	Date                 string  `csv:"Date"`
@@ -106,7 +111,13 @@ type Maintenance struct {
 	NotificationDistance string  `csv:"Notification Distance"`
 }
 
-// ROAD TRIPS
+// A RoadTrip object is a single record from the Road Trip data file and
+// represents a road trip activity with all of its associated attributes. It is
+// date and odometer range bound with a start and end value for each of those
+// fields corresponding to the vehicles service dates and odometer readings.
+//
+// A file will contain zero or more RoadTrip records in the ROAD TRIPS section
+// of the file.
 type RoadTrip struct {
 	Name          string  `csv:"Name"`
 	StartDate     string  `csv:"Start Date"`
@@ -121,7 +132,11 @@ type RoadTrip struct {
 	Flags         string  `csv:"Flags"`
 }
 
-// VEHICLE
+// A Vehicle object is a single record from the Road Trip data file and
+// represents a the vehicle for this file with all of its associated
+// attributes.
+//
+// A file is expected to only contain a single row in the VEHICLE section.
 type Vehicle struct {
 	Name                string  `csv:"Name"`
 	Odometer            string  `csv:"Odometer"`
@@ -143,7 +158,15 @@ type Vehicle struct {
 	Tank2Units          string  `csv:"Tank 2 Units,optional"`
 }
 
-// TIRE LOG
+// A Tire object is a single record from the Road Trip data file and represents
+// a set of tires installed on the vehicle with all of its associated
+// attributes. It is date and odometer range bound with a start value for each
+// of those fields corresponding to the vehicles service dates and odometer
+// readings.
+//
+// A file will contain zero or more Tire records in the TIRE LOG section of the
+// file.
+
 type Tire struct {
 	Name           string `csv:"Name"`
 	StartDate      string `csv:"Start Date"`
@@ -158,7 +181,12 @@ type Tire struct {
 	ParentID       int    `csv:"ParentID,omitempty"`
 }
 
-// VALUATIONS
+// A Valuation object is a single record from the Road Trip data file and
+// represents the market value of the vehicle at a specified Odometer reading
+// and date.
+//
+// A file will contain zero or more Valuation records in the VALUATIONS section
+// of the file.
 type Valuation struct {
 	Type     string `csv:"Type"`
 	Date     string `csv:"Date"`
