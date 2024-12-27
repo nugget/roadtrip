@@ -1,4 +1,5 @@
-[![Go Reference](https://pkg.go.dev/badge/github.com/nugget/roadtrip.svg)](https://pkg.go.dev/github.com/nugget/roadtrip)
+![Go Reference](https://pkg.go.dev/badge/github.com/nugget/roadtrip.svg)](https://pkg.go.dev/github.com/nugget/roadtrip)
+![Build](https://github.com/nugget/roadtrip/workflows/go.yml/badge.svg)
 
 [Road Trip](https://darrensoft.ca/roadtrip/) is an iOS application written by
 Darren Stone. This Go package provides methods and functions for reading and
