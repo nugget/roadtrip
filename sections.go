@@ -4,11 +4,10 @@ package roadtrip
 
 import (
 	"fmt"
-
-	"golang.org/x/exp/slog"
+	"log/slog"
 )
 
-var HEADERS = []string{
+var csvHeaders = []string{
 	"FUEL RECORDS",
 	"MAINTENANCE RECORDS",
 	"ROAD TRIPS",
@@ -17,7 +16,12 @@ var HEADERS = []string{
 	"VALUATIONS",
 }
 
-// FUEL RECORDS
+// A Fuel is a single fuel record from the underlying Road Trip data file and
+// represents a single vehicle fuel fillup and all of its associated
+// attributes.
+//
+// It is embodied in the data file as a single CSV record in the FUEL RECORDS
+// section of the file.
 type Fuel struct {
 	Odometer     float64 `csv:"Odometer (mi)"`
 	TripDistance float64 `csv:"Trip Distance,omitempty"`
@@ -48,6 +52,8 @@ type Fuel struct {
 	TankNumber   int     `csv:"Tank Number,omitempty"`
 }
 
+// LogValue is the handler for [log.slog] to emit structured output for a
+// [Fuel] object when logging.
 func (f Fuel) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.Float64("odometer", f.Odometer),
@@ -57,6 +63,10 @@ func (f Fuel) LogValue() slog.Value {
 	)
 }
 
+// [Fuel.Odometer] is considered the primary key for a vehicle's [Fuel]
+// records. Two [Fuel] records are considered equal as long as the odometer
+// values match. No other fields in the struct are used to disimbaguate between
+// records.
 func (f *Fuel) Comparator() string {
 	return fmt.Sprintf("%07d", int64(f.Odometer))
 }

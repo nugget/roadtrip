@@ -24,6 +24,20 @@ type CSV struct {
 	Raw                []byte
 }
 
+// NewFromFile returns a new [CSV] populated with data read and parsed
+// from the file.
+func NewFromFile(filename string) (CSV, error) {
+	var rt CSV
+
+	err := rt.LoadFile(filename)
+	if err != nil {
+		return rt, err
+	}
+
+	return rt, nil
+}
+
+// LoadFile reads and parses a file into a [CSV] variable.
 func (rt *CSV) LoadFile(filename string) error {
 	buf, err := os.ReadFile(filename)
 	if err != nil {
@@ -79,6 +93,8 @@ func (rt *CSV) LoadFile(filename string) error {
 	return nil
 }
 
+// Section returns a byte slice containing the raw contents of the specified section
+// from the corresponding [CSV] object.
 func (rt *CSV) Section(sectionHeader string) (outbuf []byte) {
 	slog.Debug("Fetching Section from Raw",
 		"sectionHeader", sectionHeader,
@@ -86,8 +102,8 @@ func (rt *CSV) Section(sectionHeader string) (outbuf []byte) {
 
 	sectionStart := make(map[string]int)
 
-	for index, element := range HEADERS {
-		i := bytes.Index(rt.Raw, []byte(HEADERS[index]))
+	for index, element := range csvHeaders {
+		i := bytes.Index(rt.Raw, []byte(csvHeaders[index]))
 		sectionStart[element] = i
 
 		slog.Debug("Section Start detected",
@@ -120,6 +136,8 @@ func (rt *CSV) Section(sectionHeader string) (outbuf []byte) {
 	return
 }
 
+// Parse unmarshalls the raw byte slice of the specified section from the underlying [CSV]
+// object and transforms it into the struct used by this package.
 func (rt *CSV) Parse(sectionHeader string, target interface{}) error {
 	if _, err := csvlib.Unmarshal(rt.Section(sectionHeader), target); err != nil {
 		return err
@@ -128,6 +146,8 @@ func (rt *CSV) Parse(sectionHeader string, target interface{}) error {
 	return nil
 }
 
+// ParseDate parses a Road Trip styled date string and turns it into a proper
+// Go [time.Time] value
 func ParseDate(dateString string) (t time.Time) {
 	t, err := time.Parse("2006-1-2 15:04", dateString)
 	if err != nil {
