@@ -66,7 +66,7 @@ type FuelRecord struct {
 
 // LogValue is the handler for [log.slog] to emit structured output for a
 // [FuelRecord] object when logging.
-func (f FuelRecord) LogValue() slog.Value {
+func (f *FuelRecord) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.Float64("odometer", f.Odometer),
 		slog.String("date", f.Date),

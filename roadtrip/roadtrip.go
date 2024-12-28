@@ -88,7 +88,7 @@ func (v *Vehicle) LoadFile(filename string) error {
 		return fmt.Errorf("unable to parse Valuations: %w", err)
 	}
 
-	slog.Info("Loaded Road Trip CSV",
+	slog.Debug("Loaded Road Trip CSV",
 		"filename", v.Filename,
 		"bytes", len(buf),
 		"vehicleRecords", len(v.Vehicles),
