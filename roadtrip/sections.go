@@ -1,15 +1,14 @@
+// Package roadtrip implements utility routines for reading the CSV backup
+// files created by the iOS Road Trip MPG application.
 package roadtrip
-
-//go:generate go run go-simpler.org/sloggen@latest -pkg=roadtrip -dir=.. -logger -ctx -l=trace:-8 -c=odometer
 
 import (
 	"fmt"
 	"log/slog"
 )
 
-// Road Trip Data File version 1500,en
 const (
-	// Road Trip data file version number supported by this package.
+	// Road Trip Data File version 1500,en
 	SupportedVersion int64 = 1500
 )
 
