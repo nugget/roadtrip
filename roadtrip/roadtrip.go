@@ -1,3 +1,5 @@
+// Package roadtrip implements utility routines for reading the CSV backup
+// files created by the iOS Road Trip MPG application.
 package roadtrip
 
 import (
@@ -10,6 +12,7 @@ import (
 	"github.com/tiendc/go-csvlib"
 )
 
+// A CSV holds the parsed sections contained in a Road Trip CSV backup file.
 type CSV struct {
 	Delimiters         string
 	Version            int
