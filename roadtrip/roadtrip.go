@@ -17,11 +17,6 @@ const (
 	// Remove erroneous header fields for VEHICLE section
 	// per Darren Stone 2024-12-09 via email.
 	RemoveErroneousHeaders = true
-
-	Odometer = "odometer"
-	Name     = "name"
-	Version  = "version"
-	Language = "language"
 )
 
 // VehicleOptions contain the options to be used when creating a new Vehicle object.
@@ -77,7 +72,7 @@ func SectionHeaderList() []string {
 	var headerList []string
 
 	vt := reflect.TypeOf(Vehicle{})
-	for i := 0; i < vt.NumField(); i++ {
+	for i := range vt.NumField() {
 		field := vt.Field(i)
 		sectionHeader, ok := field.Tag.Lookup("roadtrip")
 		if ok {
@@ -95,7 +90,7 @@ func SectionHeader(target any) (string, error) {
 	targetType := reflect.TypeOf(target).Elem()
 
 	vt := reflect.TypeOf(Vehicle{})
-	for i := 0; i < vt.NumField(); i++ {
+	for i := range vt.NumField() {
 		field := vt.Field(i)
 
 		sectionHeader, ok := field.Tag.Lookup("roadtrip")
@@ -158,13 +153,13 @@ func (v *Vehicle) LogValue() slog.Value {
 	if len(v.Vehicles) == 1 {
 		if v.logLevel > -slog.LevelInfo {
 			value = slog.GroupValue(
-				slog.String(Name, v.Vehicles[0].Name),
+				slog.String("name", v.Vehicles[0].Name),
 			)
 		} else {
 			value = slog.GroupValue(
-				slog.String(Name, v.Vehicles[0].Name),
-				slog.Int(Version, v.Version),
-				slog.String(Language, v.Language),
+				slog.String("name", v.Vehicles[0].Name),
+				slog.Int("version", v.Version),
+				slog.String("filename", v.Filename),
 			)
 		}
 	}
@@ -215,7 +210,7 @@ func (v *Vehicle) UnmarshalRoadtrip(data []byte) error {
 		"vehicleRecords", len(v.Vehicles),
 		"fuelRecords", len(v.FuelRecords),
 		"mainteanceRecords", len(v.MaintenanceRecords),
-		"Trips", len(v.Trips),
+		"trips", len(v.Trips),
 		"tireLogs", len(v.Tires),
 		"valuations", len(v.Valuations),
 	)
@@ -231,11 +226,6 @@ func GetSectionContents(data []byte, sectionHeader string) []byte {
 	for _, element := range SectionHeaderList() {
 		i := bytes.Index(data, []byte(element))
 		sectionStart[element] = i
-
-		slog.Debug("Section Start detected",
-			"element", element,
-			"sectionStart", i,
-		)
 	}
 
 	startPosition := sectionStart[sectionHeader]
@@ -257,17 +247,14 @@ func GetSectionContents(data []byte, sectionHeader string) []byte {
 
 // ParseDate parses a Road Trip styled date string and turns it into a proper
 // Go [time.Time] value.
-func ParseDate(dateString string) time.Time {
+func ParseDate(dateString string) (time.Time, error) {
 	t, err := time.Parse("2006-1-2 15:04", dateString)
 	if err != nil {
 		t, err = time.Parse("2006-1-2", dateString)
 		if err != nil {
-			slog.Error("Can't parse Road Trip date string",
-				"error", err,
-				"dateString", dateString,
-			)
+			return time.Time{}, fmt.Errorf("unable to parse date '%s': %w", dateString, err)
 		}
 	}
 
-	return t
+	return t, nil
 }

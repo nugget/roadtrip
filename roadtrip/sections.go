@@ -58,10 +58,10 @@ type FuelRecord struct {
 // [FuelRecord] object when logging.
 func (f *FuelRecord) LogValue() slog.Value {
 	return slog.GroupValue(
-		slog.Float64(Odometer, f.Odometer),
-		slog.String(Date, f.Date),
-		slog.String(Location, f.Location),
-		slog.Float64(TotalPrice, f.TotalPrice),
+		slog.Float64("odometer", f.Odometer),
+		slog.String("date", f.Date),
+		slog.String("location", f.Location),
+		slog.Float64("totalPrice", f.TotalPrice),
 	)
 }
 

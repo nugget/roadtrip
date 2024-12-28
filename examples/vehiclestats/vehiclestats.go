@@ -44,7 +44,6 @@ func main() {
 	totalFuelCost := 0.00
 
 	for i, f := range vehicle.FuelRecords {
-		slog.Debug("processing FuelRecord", "i", i, "f", f)
 		totalFuelCost += f.TotalPrice
 	}
 
