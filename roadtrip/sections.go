@@ -8,30 +8,15 @@ import (
 )
 
 const (
-	// Road Trip Data File version 1500,en
+	// Supported Road Trip Data File version "1500,en" only.
 	SupportedVersion int64 = 1500
 )
 
-// Each Road Trip "CSV" file is actually multiple, independent blocks of CSV
-// data delimited by two newlines and a section header string in all capital
-// letters.
-//
-// SectionHeaders contains a slice of strings corresponding to each of the
-// section headers found in the Road Trip data file. Currently this package
-// only supports Language "en" (see known issues in the README.md file).
-var SectionHeaders = []string{
-	"FUEL RECORDS",
-	"MAINTENANCE RECORDS",
-	"ROAD TRIPS",
-	"VEHICLE",
-	"TIRE LOG",
-	"VALUATIONS",
-}
-
-const Odometer = "odometer"
-const Date = "date"
-const Location = "location"
-const Totalprice = "totalPrice"
+const (
+	Date       = "date"
+	Location   = "location"
+	TotalPrice = "totalPrice"
+)
 
 // A FuelRecord contains a single fuel CSV row from the underlying Road Trip
 // data file and represents a single vehicle fuel fillup and all of its
