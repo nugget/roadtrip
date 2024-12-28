@@ -12,4 +12,4 @@ require (
 	github.com/tiendc/gofn v1.11.0 // indirect
 )
 
-replace github.com/nugget/roadtrip-go/roadtrip => ../../roadtrip
+// replace github.com/nugget/roadtrip-go/roadtrip => ../../roadtrip
