@@ -43,7 +43,7 @@ func main() {
 
 	totalFuelCost := 0.00
 
-	for i, f := range vehicle.FuelRecords {
+	for _, f := range vehicle.FuelRecords {
 		totalFuelCost += f.TotalPrice
 	}
 
