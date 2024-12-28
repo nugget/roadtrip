@@ -1,12 +1,13 @@
 package roadtrip
 
-// Road Trip Data File version 1500,en
+//go:generate go run go-simpler.org/sloggen@latest -pkg=roadtrip -dir=.. -logger -ctx -l=trace:-8 -c=odometer
 
 import (
 	"fmt"
 	"log/slog"
 )
 
+// Road Trip Data File version 1500,en
 const (
 	// Road Trip data file version number supported by this package.
 	SupportedVersion int64 = 1500
@@ -27,6 +28,11 @@ var SectionHeaders = []string{
 	"TIRE LOG",
 	"VALUATIONS",
 }
+
+const Odometer = "odometer"
+const Date = "date"
+const Location = "location"
+const Totalprice = "totalPrice"
 
 // A FuelRecord contains a single fuel CSV row from the underlying Road Trip
 // data file and represents a single vehicle fuel fillup and all of its
@@ -68,10 +74,10 @@ type FuelRecord struct {
 // [FuelRecord] object when logging.
 func (f *FuelRecord) LogValue() slog.Value {
 	return slog.GroupValue(
-		slog.Float64("odometer", f.Odometer),
-		slog.String("date", f.Date),
-		slog.String("location", f.Location),
-		slog.Float64("totalPrice", f.TotalPrice),
+		slog.Float64(Odometer, f.Odometer),
+		slog.String(Date, f.Date),
+		slog.String(Location, f.Location),
+		slog.Float64(TotalPrice, f.TotalPrice),
 	)
 }
 
