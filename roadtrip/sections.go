@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	// Road Trip data file version number supported by this package
+	// Road Trip data file version number supported by this package.
 	SupportedVersion int64 = 1500
 )
 
@@ -16,10 +16,10 @@ const (
 // data delimited by two newlines and a section header string in all capital
 // letters.
 //
-// Sections contains a slice of strings corresponding to each of the section
-// headers found in the Road Trip data file. Currently this package only
-// supports Language "en" (see known issues in the README.md file)
-var Sections = []string{
+// SectionHeaders contains a slice of strings corresponding to each of the
+// section headers found in the Road Trip data file. Currently this package
+// only supports Language "en" (see known issues in the README.md file).
+var SectionHeaders = []string{
 	"FUEL RECORDS",
 	"MAINTENANCE RECORDS",
 	"ROAD TRIPS",
@@ -112,14 +112,14 @@ type MaintenanceRecord struct {
 	NotificationDistance string  `csv:"Notification Distance"`
 }
 
-// A RoadTripRecord  is a single CSV row from the Road Trip data file and
+// A TripRecord  is a single CSV row from the Road Trip data file and
 // represents a road trip activity with all of its associated attributes. It is
 // date and odometer range bound with a start and end value for each of those
 // fields corresponding to the vehicle's service dates and odometer readings.
 //
-// A file will contain zero or more RoadTripRecord rows in the ROAD TRIPS section
+// A file will contain zero or more TripRecord rows in the ROAD TRIPS section
 // of the file.
-type RoadTripRecord struct {
+type TripRecord struct {
 	Name          string  `csv:"Name"`
 	StartDate     string  `csv:"Start Date"`
 	StartOdometer float64 `csv:"Start Odometer (mi.),omitempty"`

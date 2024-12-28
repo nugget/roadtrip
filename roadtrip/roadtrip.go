@@ -21,7 +21,7 @@ type Vehicle struct {
 	Vehicles           []VehicleRecord     `section:"VEHICLE"`
 	FuelRecords        []FuelRecord        `section:"FUEL RECORDS"`
 	MaintenanceRecords []MaintenanceRecord `section:"MAINTENANCE RECORDS"`
-	RoadTrips          []RoadTripRecord    `section:"ROAD TRIPS"`
+	Trips              []TripRecord        `section:"ROAD TRIPS"`
 	Tires              []TireRecord        `section:"TIRE LOG"`
 	Valuations         []ValuationRecord   `section:"VALUATIONS"`
 	Raw                []byte
@@ -58,28 +58,34 @@ func (v *Vehicle) LoadFile(filename string) error {
 		v.Raw = buf
 	}
 
-	if err := v.Parse("FUEL RECORDS", &v.FuelRecords); err != nil {
-		return fmt.Errorf("FuelRecords: %w", err)
+	err = v.Parse("FUEL RECORDS", &v.FuelRecords)
+	if err != nil {
+		return fmt.Errorf("unable to parse FuelRecords: %w", err)
 	}
 
-	if err := v.Parse("MAINTENANCE RECORDS", &v.MaintenanceRecords); err != nil {
+	err = v.Parse("MAINTENANCE RECORDS", &v.MaintenanceRecords)
+	if err != nil {
 		return fmt.Errorf("MaintenanceRecords: %w", err)
 	}
 
-	if err := v.Parse("ROAD TRIPS", &v.RoadTrips); err != nil {
-		return fmt.Errorf("RoadTrips: %w", err)
+	err = v.Parse("ROAD TRIPS", &v.Trips)
+	if err != nil {
+		return fmt.Errorf("unable to parse Trips: %w", err)
 	}
 
-	if err := v.Parse("VEHICLE", &v.Vehicles); err != nil {
-		return fmt.Errorf("Vehicle: %w", err)
+	err = v.Parse("VEHICLE", &v.Vehicles)
+	if err != nil {
+		return fmt.Errorf("unable to parse Vehicle: %w", err)
 	}
 
-	if err := v.Parse("TIRE LOG", &v.Tires); err != nil {
-		return fmt.Errorf("TireLogs: %w", err)
+	err = v.Parse("TIRE LOG", &v.Tires)
+	if err != nil {
+		return fmt.Errorf("unable to parse TireLogs: %w", err)
 	}
 
-	if err := v.Parse("VALUATIONS", &v.Valuations); err != nil {
-		return fmt.Errorf("Valuations: %w", err)
+	err = v.Parse("VALUATIONS", &v.Valuations)
+	if err != nil {
+		return fmt.Errorf("unable to parse Valuations: %w", err)
 	}
 
 	slog.Info("Loaded Road Trip CSV",
@@ -88,7 +94,7 @@ func (v *Vehicle) LoadFile(filename string) error {
 		"vehicleRecords", len(v.Vehicles),
 		"fuelRecords", len(v.FuelRecords),
 		"mainteanceRecords", len(v.MaintenanceRecords),
-		"roadTrips", len(v.RoadTrips),
+		"Trips", len(v.Trips),
 		"tireLogs", len(v.Tires),
 		"valuations", len(v.Valuations),
 	)
@@ -98,15 +104,15 @@ func (v *Vehicle) LoadFile(filename string) error {
 
 // Section returns a byte slice containing the raw contents of the specified section
 // from the corresponding [CSV] object.
-func (v *Vehicle) Section(sectionHeader string) (outbuf []byte) {
+func (v *Vehicle) Section(sectionHeader string) []byte {
 	slog.Debug("Fetching Section from Raw",
 		"sectionHeader", sectionHeader,
 	)
 
 	sectionStart := make(map[string]int)
 
-	for index, element := range Sections {
-		i := bytes.Index(v.Raw, []byte(Sections[index]))
+	for index, element := range SectionHeaders {
+		i := bytes.Index(v.Raw, []byte(SectionHeaders[index]))
 		sectionStart[element] = i
 
 		slog.Debug("Section Start detected",
@@ -127,7 +133,7 @@ func (v *Vehicle) Section(sectionHeader string) (outbuf []byte) {
 	// Don't include the section header line in the outbuf
 	startPosition = startPosition + len(sectionHeader) + 1
 
-	outbuf = v.Raw[startPosition:endPosition]
+	outbuf := v.Raw[startPosition:endPosition]
 
 	slog.Debug("Section Range calculated",
 		"sectionHeader", sectionHeader,
@@ -136,7 +142,7 @@ func (v *Vehicle) Section(sectionHeader string) (outbuf []byte) {
 		"sectionBytes", len(outbuf),
 	)
 
-	return
+	return outbuf
 }
 
 // Parse unmarshalls the raw byte slice of the specified section from the underlying [CSV]
@@ -150,8 +156,8 @@ func (v *Vehicle) Parse(sectionHeader string, target interface{}) error {
 }
 
 // ParseDate parses a Road Trip styled date string and turns it into a proper
-// Go [time.Time] value
-func ParseDate(dateString string) (t time.Time) {
+// Go [time.Time] value.
+func ParseDate(dateString string) time.Time {
 	t, err := time.Parse("2006-1-2 15:04", dateString)
 	if err != nil {
 		t, err = time.Parse("2006-1-2", dateString)
