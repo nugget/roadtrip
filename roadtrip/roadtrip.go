@@ -24,12 +24,6 @@ const (
 	Language = "language"
 )
 
-// Unmashaler is our abstraction to allow UnmarshalRoadtrip() operations on
-// the types defined in this package.
-type Unmarshaler interface {
-	UnmarshalRoadtrip([]byte) error
-}
-
 // VehicleOptions contain the options to be used when creating a new Vehicle object.
 type VehicleOptions struct {
 	Logger   *slog.Logger
@@ -43,7 +37,7 @@ type Vehicle struct {
 	Language           string
 	Filename           string
 	Vehicles           []VehicleRecord     `roadtrip:"VEHICLE"`
-	FuelRecords        FuelSection         `roadtrip:"FUEL RECORDS"`
+	FuelRecords        []FuelRecord        `roadtrip:"FUEL RECORDS"`
 	MaintenanceRecords []MaintenanceRecord `roadtrip:"MAINTENANCE RECORDS"`
 	Trips              []TripRecord        `roadtrip:"ROAD TRIPS"`
 	Tires              []TireRecord        `roadtrip:"TIRE LOG"`
@@ -51,6 +45,22 @@ type Vehicle struct {
 	Raw                []byte
 	logger             *slog.Logger
 	logLevel           slog.Level
+}
+
+func UnmarshalRoadtripSection(data []byte, target any) error {
+	header, err := SectionHeader(target)
+	if err != nil {
+		return err
+	}
+
+	sectionData := GetSectionContents(data, header)
+
+	_, err = cvslib.Unmarshal(sectionData, target)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Each Road Trip "CSV" file is actually multiple, independent blocks of CSV
@@ -96,21 +106,6 @@ func SectionHeader(target any) (string, error) {
 	}
 
 	return "", fmt.Errorf("cannot unmarshal %s, missing roadtrip struct tag", targetType)
-}
-
-type FuelSection []FuelRecord
-
-func (s *FuelSection) UnmarshalRoadtrip(data []byte) error {
-	header, err := SectionHeader(s)
-
-	slog.Info("header determined to be", "header", header)
-
-	_, err = cvslib.Unmarshal(data, s)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // New returns a new, empty [Vehicle] with a no-op logger.
@@ -199,9 +194,19 @@ func (v *Vehicle) UnmarshalRoadtrip(data []byte) error {
 
 	var err error
 
-	err = v.FuelRecords.UnmarshalRoadtrip(v.Section("FUEL RECORDS"))
-	if err != nil {
-		return fmt.Errorf("unable to parse FuelRecords: %w", err)
+	var targets []any
+	targets = append(targets, &v.Vehicles)
+	targets = append(targets, &v.FuelRecords)
+	targets = append(targets, &v.MaintenanceRecords)
+	targets = append(targets, &v.Trips)
+	targets = append(targets, &v.Tires)
+	targets = append(targets, &v.Valuations)
+
+	for _, target := range targets {
+		err = UnmarshalRoadtripSection(data, target)
+		if err != nil {
+			return fmt.Errorf("unable to parse %s: %w", target, err)
+		}
 	}
 
 	v.logger.Info("Loaded Road Trip CSV",
@@ -219,16 +224,12 @@ func (v *Vehicle) UnmarshalRoadtrip(data []byte) error {
 }
 
 // Section returns a byte slice containing the raw contents of the specified section
-// from the corresponding [CSV] object.
-func (v *Vehicle) Section(sectionHeader string) []byte {
-	v.logger.Debug("Fetching Section from Raw",
-		"sectionHeader", sectionHeader,
-	)
-
+// from the corresponding [Vehicle.Raw] object.
+func GetSectionContents(data []byte, sectionHeader string) []byte {
 	sectionStart := make(map[string]int)
 
 	for _, element := range SectionHeaderList() {
-		i := bytes.Index(v.Raw, []byte(element))
+		i := bytes.Index(data, []byte(element))
 		sectionStart[element] = i
 
 		slog.Debug("Section Start detected",
@@ -238,7 +239,7 @@ func (v *Vehicle) Section(sectionHeader string) []byte {
 	}
 
 	startPosition := sectionStart[sectionHeader]
-	endPosition := len(v.Raw)
+	endPosition := len(data)
 
 	for _, e := range sectionStart {
 		if e > startPosition && e < endPosition {
@@ -249,14 +250,7 @@ func (v *Vehicle) Section(sectionHeader string) []byte {
 	// Don't include the section header line in the outbuf
 	startPosition = startPosition + len(sectionHeader) + 1
 
-	outbuf := v.Raw[startPosition:endPosition]
-
-	v.logger.Debug("Section Range calculated",
-		"sectionHeader", sectionHeader,
-		"startPosition", startPosition,
-		"endPosition", endPosition,
-		"sectionBytes", len(outbuf),
-	)
+	outbuf := data[startPosition:endPosition]
 
 	return outbuf
 }
