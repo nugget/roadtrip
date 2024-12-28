@@ -1,4 +1,4 @@
-[![Go](https://github.com/nugget/roadtrip/actions/workflows/go.yml/badge.svg)](https://github.com/nugget/roadtrip/actions/workflows/go.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/nugget/roadtrip-go/roadtrip.svg)](https://pkg.go.dev/github.com/nugget/roadtrip-go) [![Go Report Card](https://goreportcard.com/badge/github.com/nugget/roadtrip-go/roadtrip)](https://goreportcard.com/report/github.com/nugget/roadtrip-go/roadtrip)
+[![Go](https://github.com/nugget/roadtrip/actions/workflows/go.yml/badge.svg)](https://github.com/nugget/roadtrip/actions/workflows/go.yml) [![Go Reference](https://pkg.go.dev/badge/github.com/nugget/roadtrip-go/roadtrip.svg)](https://pkg.go.dev/github.com/nugget/roadtrip-go/roadtrip) [![Go Report Card](https://goreportcard.com/badge/github.com/nugget/roadtrip-go/roadtrip)](https://goreportcard.com/report/github.com/nugget/roadtrip-go/roadtrip)
 
 [Road Trip](https://darrensoft.ca/roadtrip/) is an iOS application written by
 Darren Stone. This Go package provides methods and functions for reading and
