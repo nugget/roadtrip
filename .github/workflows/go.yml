@@ -21,9 +21,11 @@ jobs:
       with:
         go-version: '1.22'
 
-    - name: Build
+    - name: Build roadtrip package
+      working-directory: roadtrip
       run: go build -v ./...
 
-    - name: Test
+    - name: Test roadtrip package
+      working-directory: roadtrip
       run: go test -v ./...
 
