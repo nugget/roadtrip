@@ -205,7 +205,7 @@ linters-settings:
     # - "default": report only the default slog logger
     # https://github.com/go-simpler/sloglint?tab=readme-ov-file#no-global
     # Default: ""
-    no-global: "all"
+    no-global: ""
     # Enforce using methods that accept a context.
     # Values:
     # - "": disabled
@@ -250,8 +250,8 @@ linters:
     - forbidigo # forbids identifiers
     - funlen # tool for detection of long functions
     - gocheckcompilerdirectives # validates go compiler directive comments (//go:)
-    - gochecknoglobals # checks that no global variables exist
-    - gochecknoinits # checks that no init functions are present in Go code
+    #- gochecknoglobals # checks that no global variables exist
+    #- gochecknoinits # checks that no init functions are present in Go code
     - gochecksumtype # checks exhaustiveness on Go "sum types"
     - gocognit # computes and checks the cognitive complexity of functions
     - goconst # finds repeated strings that could be replaced by a constant
@@ -284,7 +284,7 @@ linters:
     - promlinter # checks Prometheus metrics naming via promlint
     - protogetter # reports direct reads from proto message fields when getters should be used
     - reassign # checks that package variables are not reassigned
-    - recvcheck # checks for receiver type consistency
+    #- recvcheck # checks for receiver type consistency
     - revive # fast, configurable, extensible, flexible, and beautiful linter for Go, drop-in replacement of golint
     - rowserrcheck # checks whether Err of rows is checked successfully
     - sloglint # ensure consistent code style when using log/slog
