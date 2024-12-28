@@ -45,7 +45,7 @@ Version,Language
 
 ## Installation
 
-`go get -u github.com/nugget/roadtrip`
+`go get -u github.com/nugget/roadtrip-go/roadtrip`
 
 
 ## Links
