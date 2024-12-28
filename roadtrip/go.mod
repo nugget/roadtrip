@@ -1,4 +1,4 @@
-module github.com/nugget/roadtrip
+module github.com/nugget/roadtrip-go/roadtrip
 
 go 1.23
 
