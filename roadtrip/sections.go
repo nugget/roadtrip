@@ -12,12 +12,13 @@ const (
 	SupportedVersion int64 = 1500
 )
 
-// Each Road Trip "CSV" file is actually multiple blocks of CSV data delimeted by
-// two newlines and a section header string in all capital letters.
+// Each Road Trip "CSV" file is actually multiple, independent blocks of CSV
+// data delimited by two newlines and a section header string in all capital
+// letters.
 //
 // Sections contains a slice of strings corresponding to each of the section
-// headers found in the Road Trip data file. Currently this package only supports
-// Language "en" (see known issues in the README.md file)
+// headers found in the Road Trip data file. Currently this package only
+// supports Language "en" (see known issues in the README.md file)
 var Sections = []string{
 	"FUEL RECORDS",
 	"MAINTENANCE RECORDS",
@@ -27,13 +28,13 @@ var Sections = []string{
 	"VALUATIONS",
 }
 
-// A Fuel object is a single fuel record from the underlying Road Trip data
-// file and represents a single vehicle fuel fillup and all of its associated
-// attributes.
+// A FuelRecord contains a single fuel CSV row from the underlying Road Trip
+// data file and represents a single vehicle fuel fillup and all of its
+// associated attributes.
 //
-// A file will contain zero or more Fuel records in the FUEL RECORDS
-// section of the file.
-type Fuel struct {
+// A file will contain zero or more Fuel records in the FUEL RECORDS section of
+// the file.
+type FuelRecord struct {
 	Odometer     float64 `csv:"Odometer (mi)"`
 	TripDistance float64 `csv:"Trip Distance,omitempty"`
 	Date         string  `csv:"Date"`
@@ -64,8 +65,8 @@ type Fuel struct {
 }
 
 // LogValue is the handler for [log.slog] to emit structured output for a
-// [Fuel] object when logging.
-func (f Fuel) LogValue() slog.Value {
+// [FuelRecord] object when logging.
+func (f FuelRecord) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.Float64("odometer", f.Odometer),
 		slog.String("date", f.Date),
@@ -74,21 +75,21 @@ func (f Fuel) LogValue() slog.Value {
 	)
 }
 
-// [Fuel.Odometer] is considered the primary key for a vehicle's [Fuel]
-// records. Two [Fuel] records are considered equal as long as the odometer
+// [FuelRecord.Odometer] is considered the primary key for a [FuelRecord]
+// variable. Two [FuelRecord] variables are considered equal as long as the odometer
 // values match. No other fields in the struct are used to disimbaguate between
 // records.
-func (f *Fuel) Comparator() string {
+func (f *FuelRecord) PrimaryKey() string {
 	return fmt.Sprintf("%07d", int64(f.Odometer))
 }
 
-// A Maintence object is a single record from the Road Trip data file and
-// represents a single vehicle maintenance activity with all of its associated
-// attributes.
+// A MaintenceRecord is a single CSV row from the Road Trip data file and
+// represents a distinct vehicle maintenance activity with all of its
+// associated attributes.
 //
-// A file will contain zero or more Maintenance records in the ROAD TRIPS
-// section of the file.
-type Maintenance struct {
+// A file will contain zero or more MaintenanceRecord rows in the MAINTENANCE
+// RECORDS section of the file.
+type MaintenanceRecord struct {
 	Description          string  `csv:"Description"`
 	Date                 string  `csv:"Date"`
 	Odometer             float64 `csv:"Odometer (mi.),omitempty"`
@@ -111,14 +112,14 @@ type Maintenance struct {
 	NotificationDistance string  `csv:"Notification Distance"`
 }
 
-// A RoadTrip object is a single record from the Road Trip data file and
+// A RoadTripRecord  is a single CSV row from the Road Trip data file and
 // represents a road trip activity with all of its associated attributes. It is
 // date and odometer range bound with a start and end value for each of those
-// fields corresponding to the vehicles service dates and odometer readings.
+// fields corresponding to the vehicle's service dates and odometer readings.
 //
-// A file will contain zero or more RoadTrip records in the ROAD TRIPS section
+// A file will contain zero or more RoadTripRecord rows in the ROAD TRIPS section
 // of the file.
-type RoadTrip struct {
+type RoadTripRecord struct {
 	Name          string  `csv:"Name"`
 	StartDate     string  `csv:"Start Date"`
 	StartOdometer float64 `csv:"Start Odometer (mi.),omitempty"`
@@ -132,12 +133,12 @@ type RoadTrip struct {
 	Flags         string  `csv:"Flags"`
 }
 
-// A Vehicle object is a single record from the Road Trip data file and
+// A VehicleRecord is a single CSV row from the Road Trip data file and
 // represents a the vehicle for this file with all of its associated
 // attributes.
 //
 // A file is expected to only contain a single row in the VEHICLE section.
-type Vehicle struct {
+type VehicleRecord struct {
 	Name                string  `csv:"Name"`
 	Odometer            string  `csv:"Odometer"`
 	Units               string  `csv:"Units"`
@@ -158,16 +159,16 @@ type Vehicle struct {
 	Tank2Units          string  `csv:"Tank 2 Units,optional"`
 }
 
-// A Tire object is a single record from the Road Trip data file and represents
+// A TireRecord is a single CSV row from the Road Trip data file and represents
 // a set of tires installed on the vehicle with all of its associated
 // attributes. It is date and odometer range bound with a start value for each
-// of those fields corresponding to the vehicles service dates and odometer
+// of those fields corresponding to the vehicle's service dates and odometer
 // readings.
 //
 // A file will contain zero or more Tire records in the TIRE LOG section of the
 // file.
 
-type Tire struct {
+type TireRecord struct {
 	Name           string `csv:"Name"`
 	StartDate      string `csv:"Start Date"`
 	StartOdometer  int    `csv:"Start Odometer (mi.),omitempty"`
@@ -181,13 +182,13 @@ type Tire struct {
 	ParentID       int    `csv:"ParentID,omitempty"`
 }
 
-// A Valuation object is a single record from the Road Trip data file and
+// A ValuationRecord is a single CSV row from the Road Trip data file and
 // represents the market value of the vehicle at a specified Odometer reading
 // and date.
 //
 // A file will contain zero or more Valuation records in the VALUATIONS section
 // of the file.
-type Valuation struct {
+type ValuationRecord struct {
 	Type     string `csv:"Type"`
 	Date     string `csv:"Date"`
 	Odometer int    `csv:"Odometer,omitempty"`

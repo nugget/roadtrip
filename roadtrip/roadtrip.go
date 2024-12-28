@@ -12,85 +12,85 @@ import (
 	"github.com/tiendc/go-csvlib"
 )
 
-// A CSV holds the parsed sections contained in a Road Trip CSV backup file.
-type CSV struct {
+// A Vehicle holds the parsed sections contained in a Road Trip CSV backup file.
+type Vehicle struct {
 	Delimiters         string
 	Version            int
 	Language           string
 	Filename           string
-	Vehicle            []Vehicle
-	FuelRecords        []Fuel
-	MaintenanceRecords []Maintenance
-	RoadTrips          []RoadTrip
-	TireLogs           []Tire
-	Valuations         []Valuation
+	Vehicles           []VehicleRecord     `section:"VEHICLE"`
+	FuelRecords        []FuelRecord        `section:"FUEL RECORDS"`
+	MaintenanceRecords []MaintenanceRecord `section:"MAINTENANCE RECORDS"`
+	RoadTrips          []RoadTripRecord    `section:"ROAD TRIPS"`
+	Tires              []TireRecord        `section:"TIRE LOG"`
+	Valuations         []ValuationRecord   `section:"VALUATIONS"`
 	Raw                []byte
 }
 
-// NewFromFile returns a new [CSV] populated with data read and parsed
+// NewFromFile returns a new [Vehicle] populated with data read and parsed
 // from the file.
-func NewFromFile(filename string) (CSV, error) {
-	var rt CSV
+func NewFromFile(filename string) (Vehicle, error) {
+	var v Vehicle
 
-	err := rt.LoadFile(filename)
+	err := v.LoadFile(filename)
 	if err != nil {
-		return rt, err
+		return v, err
 	}
 
-	return rt, nil
+	return v, nil
 }
 
-// LoadFile reads and parses a file into a [CSV] variable.
-func (rt *CSV) LoadFile(filename string) error {
+// LoadFile reads and parses a file into a [Vehicle] variable.
+func (v *Vehicle) LoadFile(filename string) error {
 	buf, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}
 
-	rt.Filename = filename
+	v.Filename = filename
 
 	if true {
 		// Remove erroneous header fields for VEHICLE section
 		// per Darren Stone 9-Dec-2024 via email
 		omitHeaders := []byte(",Tank 1 Type,Tank 2 Type,Tank 2 Units")
-		rt.Raw = bytes.Replace(buf, omitHeaders, []byte{}, 1)
+		v.Raw = bytes.Replace(buf, omitHeaders, []byte{}, 1)
 	} else {
-		rt.Raw = buf
+		v.Raw = buf
 	}
 
-	if err := rt.Parse("FUEL RECORDS", &rt.FuelRecords); err != nil {
+	if err := v.Parse("FUEL RECORDS", &v.FuelRecords); err != nil {
 		return fmt.Errorf("FuelRecords: %w", err)
 	}
 
-	if err := rt.Parse("MAINTENANCE RECORDS", &rt.MaintenanceRecords); err != nil {
+	if err := v.Parse("MAINTENANCE RECORDS", &v.MaintenanceRecords); err != nil {
 		return fmt.Errorf("MaintenanceRecords: %w", err)
 	}
 
-	if err := rt.Parse("ROAD TRIPS", &rt.RoadTrips); err != nil {
+	if err := v.Parse("ROAD TRIPS", &v.RoadTrips); err != nil {
 		return fmt.Errorf("RoadTrips: %w", err)
 	}
 
-	if err := rt.Parse("VEHICLE", &rt.Vehicle); err != nil {
+	if err := v.Parse("VEHICLE", &v.Vehicles); err != nil {
 		return fmt.Errorf("Vehicle: %w", err)
 	}
 
-	if err := rt.Parse("TIRE LOG", &rt.TireLogs); err != nil {
+	if err := v.Parse("TIRE LOG", &v.Tires); err != nil {
 		return fmt.Errorf("TireLogs: %w", err)
 	}
 
-	if err := rt.Parse("VALUATIONS", &rt.Valuations); err != nil {
+	if err := v.Parse("VALUATIONS", &v.Valuations); err != nil {
 		return fmt.Errorf("Valuations: %w", err)
 	}
 
 	slog.Info("Loaded Road Trip CSV",
-		"filename", rt.Filename,
+		"filename", v.Filename,
 		"bytes", len(buf),
-		"vehicleRecords", len(rt.Vehicle),
-		"fuelRecords", len(rt.FuelRecords),
-		"mainteanceRecords", len(rt.MaintenanceRecords),
-		"roadTrips", len(rt.RoadTrips),
-		"tireLogs", len(rt.TireLogs),
-		"valuations", len(rt.Valuations),
+		"vehicleRecords", len(v.Vehicles),
+		"fuelRecords", len(v.FuelRecords),
+		"mainteanceRecords", len(v.MaintenanceRecords),
+		"roadTrips", len(v.RoadTrips),
+		"tireLogs", len(v.Tires),
+		"valuations", len(v.Valuations),
 	)
 
 	return nil
@@ -98,7 +98,7 @@ func (rt *CSV) LoadFile(filename string) error {
 
 // Section returns a byte slice containing the raw contents of the specified section
 // from the corresponding [CSV] object.
-func (rt *CSV) Section(sectionHeader string) (outbuf []byte) {
+func (v *Vehicle) Section(sectionHeader string) (outbuf []byte) {
 	slog.Debug("Fetching Section from Raw",
 		"sectionHeader", sectionHeader,
 	)
@@ -106,7 +106,7 @@ func (rt *CSV) Section(sectionHeader string) (outbuf []byte) {
 	sectionStart := make(map[string]int)
 
 	for index, element := range Sections {
-		i := bytes.Index(rt.Raw, []byte(Sections[index]))
+		i := bytes.Index(v.Raw, []byte(Sections[index]))
 		sectionStart[element] = i
 
 		slog.Debug("Section Start detected",
@@ -116,7 +116,7 @@ func (rt *CSV) Section(sectionHeader string) (outbuf []byte) {
 	}
 
 	startPosition := sectionStart[sectionHeader]
-	endPosition := len(rt.Raw)
+	endPosition := len(v.Raw)
 
 	for _, e := range sectionStart {
 		if e > startPosition && e < endPosition {
@@ -127,7 +127,7 @@ func (rt *CSV) Section(sectionHeader string) (outbuf []byte) {
 	// Don't include the section header line in the outbuf
 	startPosition = startPosition + len(sectionHeader) + 1
 
-	outbuf = rt.Raw[startPosition:endPosition]
+	outbuf = v.Raw[startPosition:endPosition]
 
 	slog.Debug("Section Range calculated",
 		"sectionHeader", sectionHeader,
@@ -141,8 +141,8 @@ func (rt *CSV) Section(sectionHeader string) (outbuf []byte) {
 
 // Parse unmarshalls the raw byte slice of the specified section from the underlying [CSV]
 // object and transforms it into the struct used by this package.
-func (rt *CSV) Parse(sectionHeader string, target interface{}) error {
-	if _, err := csvlib.Unmarshal(rt.Section(sectionHeader), target); err != nil {
+func (v *Vehicle) Parse(sectionHeader string, target interface{}) error {
+	if _, err := csvlib.Unmarshal(v.Section(sectionHeader), target); err != nil {
 		return err
 	}
 
