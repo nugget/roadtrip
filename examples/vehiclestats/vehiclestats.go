@@ -19,7 +19,7 @@ func main() {
 	flag.Parse()
 
 	if *filename == "" {
-		slog.Error("no filename provided (--file)")
+		logger.Error("no filename provided (--file)")
 		os.Exit(1)
 	}
 
@@ -36,7 +36,7 @@ func main() {
 	// Create a [roadtrip.Vehicle] object with contents from a Road Trip data file.
 	vehicle, err := roadtrip.NewVehicleFromFile(*filename, options)
 	if err != nil {
-		slog.Error("unable to load Road Trip data file",
+		logger.Error("unable to load Road Trip data file",
 			"error", err,
 		)
 		os.Exit(1)
