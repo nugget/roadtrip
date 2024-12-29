@@ -60,7 +60,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// logger.Info("Loaded vehicle", "vehicle", vehicle)
+	logger.Info("Loaded vehicle", "vehicle", vehicle)
 
 	totalFuelCost := 0.00
 
@@ -68,5 +68,6 @@ func main() {
 		totalFuelCost += f.TotalPrice
 	}
 
+	fmt.Printf("%s\n", vehicle.Vehicles[0].Name)
 	fmt.Printf("Spent %0.02f on fuel in %d fillups\n", totalFuelCost, len(vehicle.FuelRecords))
 }
