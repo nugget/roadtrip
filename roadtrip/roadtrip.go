@@ -133,7 +133,7 @@ func SectionHeaderForTarget(target any) (string, error) {
 func (fileData *RawFileData) GetSectionContents(sectionHeader string) RawSectionData {
 	sectionStart := make(map[string]int)
 
-	dataBytes := reflect.ValueOf(fileData).Bytes()
+	dataBytes := reflect.ValueOf(*fileData).Bytes()
 
 	for _, element := range SectionHeaderList() {
 		i := bytes.Index(dataBytes, []byte(element))
