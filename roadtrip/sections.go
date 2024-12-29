@@ -1,5 +1,3 @@
-// Package roadtrip implements utility routines for reading the CSV backup
-// files created by the iOS Road Trip MPG application.
 package roadtrip
 
 import (
