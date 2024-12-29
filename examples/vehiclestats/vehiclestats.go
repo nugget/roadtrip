@@ -64,7 +64,11 @@ func main() {
 
 	totalFuelCost := 0.00
 
-	for _, f := range vehicle.FuelRecords {
+	for i, f := range vehicle.FuelRecords {
+		logger.Debug("Fuel Record",
+			"index", i,
+			"fuel", f,
+		)
 		totalFuelCost += f.TotalPrice
 	}
 

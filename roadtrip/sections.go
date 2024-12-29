@@ -1,8 +1,49 @@
 package roadtrip
 
 import (
+	"fmt"
 	"log/slog"
+	"reflect"
+	"time"
 )
+
+// AppStyleTimestamp contains a date or timestamp formatted the way the app
+// writes them.
+//
+// The iOS app uses an awkward time formatting style that is inconsistent
+// and challenging to parse. We abstract it into an interface to make it
+// simpler to massage and work with the data as it arrives.
+type AppStyleTimestamp string
+
+func (ts *AppStyleTimestamp) Raw() string {
+	return reflect.ValueOf(*ts).String()
+}
+
+// MustParse turns a Road Trip app styled timestamp string into a proper Go
+// [time.Time] value. If parsing fails it will return an error.
+func (ts *AppStyleTimestamp) MustParse() (time.Time, error) {
+	tsString := ts.Raw()
+
+	datetimeValue, datetimeError := time.Parse("2006-1-2 15:04", tsString)
+	if datetimeError == nil {
+		return datetimeValue, nil
+	}
+
+	dateValue, dateError := time.Parse("2006-1-2", tsString)
+	if dateError == nil {
+		return dateValue, nil
+	}
+
+	return time.Time{}, fmt.Errorf("unable to parse date '%s'", tsString)
+}
+
+// Parse turns a Road Trip app styled timestamp string into a proper Go
+// [time.Time] value. Unlike MustParse(), Parse will silently fail if it
+// is given malformed or unexpected data.
+func (ts *AppStyleTimestamp) Parse() time.Time {
+	t, _ := ts.MustParse()
+	return t
+}
 
 // A FuelRecord contains a single fuel CSV row from the underlying Road Trip
 // data file and represents a single vehicle fuel fillup and all of its
@@ -11,33 +52,33 @@ import (
 // A file will contain zero or more Fuel records in the FUEL RECORDS section of
 // the file.
 type FuelRecord struct {
-	Odometer     float64 `csv:"Odometer (mi)"`
-	TripDistance float64 `csv:"Trip Distance,omitempty"`
-	Date         string  `csv:"Date"`
-	FillAmount   float64 `csv:"Fill Amount,omitempty"`
-	FillUnits    string  `csv:"Fill Units"`
-	PricePerUnit float64 `csv:"Price per Unit,omitempty"`
-	TotalPrice   float64 `csv:"Total Price,omitempty"`
-	PartialFill  string  `csv:"Partial Fill,omitempty"`
-	MPG          float64 `csv:"MPG,omitempty"`
-	Note         string  `csv:"Note"`
-	Octane       string  `csv:"Octane"`
-	Location     string  `csv:"Location"`
-	Payment      string  `csv:"Payment"`
-	Conditions   string  `csv:"Conditions"`
-	Reset        string  `csv:"Reset"`
-	Categories   string  `csv:"Categories"`
-	Flags        string  `csv:"Flags"`
-	CurrencyCode int     `csv:"Currency Code,omitempty"`
-	CurrencyRate int     `csv:"Currency Rate,omitempty"`
-	Latitude     float64 `csv:"Latitude,omitempty"`
-	Longitude    float64 `csv:"Longitude,omitempty"`
-	ID           int     `csv:"ID,omitempty"`
-	FuelEconomy  string  `csv:"Trip Comp Fuel Economy"`
-	AvgSpeed     string  `csv:"Trip Comp Avg. Speed"`
-	Temperature  float64 `csv:"Trip Comp Temperature,omitempty"`
-	DriveTime    string  `csv:"Trip Comp Drive Time"`
-	TankNumber   int     `csv:"Tank Number,omitempty"`
+	Odometer     float64           `csv:"Odometer (mi)"`
+	TripDistance float64           `csv:"Trip Distance,omitempty"`
+	Date         AppStyleTimestamp `csv:"Date"`
+	FillAmount   float64           `csv:"Fill Amount,omitempty"`
+	FillUnits    string            `csv:"Fill Units"`
+	PricePerUnit float64           `csv:"Price per Unit,omitempty"`
+	TotalPrice   float64           `csv:"Total Price,omitempty"`
+	PartialFill  string            `csv:"Partial Fill,omitempty"`
+	MPG          float64           `csv:"MPG,omitempty"`
+	Note         string            `csv:"Note"`
+	Octane       string            `csv:"Octane"`
+	Location     string            `csv:"Location"`
+	Payment      string            `csv:"Payment"`
+	Conditions   string            `csv:"Conditions"`
+	Reset        string            `csv:"Reset"`
+	Categories   string            `csv:"Categories"`
+	Flags        string            `csv:"Flags"`
+	CurrencyCode int               `csv:"Currency Code,omitempty"`
+	CurrencyRate int               `csv:"Currency Rate,omitempty"`
+	Latitude     float64           `csv:"Latitude,omitempty"`
+	Longitude    float64           `csv:"Longitude,omitempty"`
+	ID           int               `csv:"ID,omitempty"`
+	FuelEconomy  string            `csv:"Trip Comp Fuel Economy"`
+	AvgSpeed     string            `csv:"Trip Comp Avg. Speed"`
+	Temperature  float64           `csv:"Trip Comp Temperature,omitempty"`
+	DriveTime    string            `csv:"Trip Comp Drive Time"`
+	TankNumber   int               `csv:"Tank Number,omitempty"`
 }
 
 // LogValue is the handler for [log.slog] to emit structured output for a
@@ -45,7 +86,7 @@ type FuelRecord struct {
 func (v FuelRecord) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.Float64("odometer", v.Odometer),
-		slog.String("date", v.Date),
+		slog.String("date", v.Date.Raw()),
 		slog.String("location", v.Location),
 		slog.Float64("totalPrice", v.TotalPrice),
 	)
@@ -58,26 +99,26 @@ func (v FuelRecord) LogValue() slog.Value {
 // A file will contain zero or more MaintenanceRecord rows in the MAINTENANCE
 // RECORDS section of the file.
 type MaintenanceRecord struct {
-	Description          string  `csv:"Description"`
-	Date                 string  `csv:"Date"`
-	Odometer             float64 `csv:"Odometer (mi.),omitempty"`
-	Cost                 float64 `csv:"Cost,omitempty"`
-	Note                 string  `csv:"Note"`
-	Location             string  `csv:"Location"`
-	Type                 string  `csv:"Type"`
-	Subtype              string  `csv:"Subtype"`
-	Payment              string  `csv:"Payment"`
-	Categories           string  `csv:"Categories"`
-	ReminderInterval     string  `csv:"Reminder Interval"`
-	ReminderDistance     float64 `csv:"Reminder Distance,omitempty"`
-	Flags                string  `csv:"Flags"`
-	CurrencyCode         int     `csv:"Currency Code,omitempty"`
-	CurrencyRate         int     `csv:"Currency Rate,omitempty"`
-	Latitude             float64 `csv:"Latitude,omitempty"`
-	Longitude            float64 `csv:"Longitude,omitempty"`
-	ID                   int     `csv:"ID,omitempty"`
-	NotificationInterval string  `csv:"Notification Interval"`
-	NotificationDistance float64 `csv:"Notification Distance,omitempty"`
+	Description          string            `csv:"Description"`
+	Date                 AppStyleTimestamp `csv:"Date"`
+	Odometer             float64           `csv:"Odometer (mi.),omitempty"`
+	Cost                 float64           `csv:"Cost,omitempty"`
+	Note                 string            `csv:"Note"`
+	Location             string            `csv:"Location"`
+	Type                 string            `csv:"Type"`
+	Subtype              string            `csv:"Subtype"`
+	Payment              string            `csv:"Payment"`
+	Categories           string            `csv:"Categories"`
+	ReminderInterval     string            `csv:"Reminder Interval"`
+	ReminderDistance     float64           `csv:"Reminder Distance,omitempty"`
+	Flags                string            `csv:"Flags"`
+	CurrencyCode         int               `csv:"Currency Code,omitempty"`
+	CurrencyRate         int               `csv:"Currency Rate,omitempty"`
+	Latitude             float64           `csv:"Latitude,omitempty"`
+	Longitude            float64           `csv:"Longitude,omitempty"`
+	ID                   int               `csv:"ID,omitempty"`
+	NotificationInterval string            `csv:"Notification Interval"`
+	NotificationDistance float64           `csv:"Notification Distance,omitempty"`
 }
 
 // LogValue is the handler for [log.slog] to emit structured output for a
@@ -85,7 +126,7 @@ type MaintenanceRecord struct {
 func (v MaintenanceRecord) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.Float64("odometer", v.Odometer),
-		slog.String("date", v.Date),
+		slog.String("date", v.Date.Raw()),
 		slog.String("description", v.Description),
 		slog.String("location", v.Location),
 		slog.Float64("Cost", v.Cost),
@@ -100,17 +141,17 @@ func (v MaintenanceRecord) LogValue() slog.Value {
 // A file will contain zero or more TripRecord rows in the ROAD TRIPS section
 // of the file.
 type TripRecord struct {
-	Name          string  `csv:"Name"`
-	StartDate     string  `csv:"Start Date"`
-	StartOdometer float64 `csv:"Start Odometer (mi.),omitempty"`
-	EndDate       string  `csv:"End Date"`
-	EndOdometer   float64 `csv:"End Odometer,omitempty"`
-	Note          string  `csv:"Note"`
-	Distance      float64 `csv:"Distance,omitempty"`
-	ID            int     `csv:"ID,omitempty"`
-	Type          string  `csv:"Type"`
-	Categories    string  `csv:"Categories"`
-	Flags         string  `csv:"Flags"`
+	Name          string            `csv:"Name"`
+	StartDate     AppStyleTimestamp `csv:"Start Date"`
+	StartOdometer float64           `csv:"Start Odometer (mi.),omitempty"`
+	EndDate       AppStyleTimestamp `csv:"End Date"`
+	EndOdometer   float64           `csv:"End Odometer,omitempty"`
+	Note          string            `csv:"Note"`
+	Distance      float64           `csv:"Distance,omitempty"`
+	ID            int               `csv:"ID,omitempty"`
+	Type          string            `csv:"Type"`
+	Categories    string            `csv:"Categories"`
+	Flags         string            `csv:"Flags"`
 }
 
 // LogValue is the handler for [log.slog] to emit structured output for a
@@ -118,7 +159,7 @@ type TripRecord struct {
 func (v TripRecord) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.Float64("startOdometer", v.StartOdometer),
-		slog.String("startDate", v.StartDate),
+		slog.String("startDate", v.StartDate.Raw()),
 		slog.String("note", v.Note),
 		slog.Float64("distance", v.Distance),
 	)
@@ -170,17 +211,17 @@ func (v VehicleRecord) LogValue() slog.Value {
 // A file will contain zero or more Tire records in the TIRE LOG section of the
 // file.
 type TireRecord struct {
-	Name           string  `csv:"Name"`
-	StartDate      string  `csv:"Start Date"`
-	StartOdometer  float64 `csv:"Start Odometer (mi.),omitempty"`
-	Size           string  `csv:"Size"`
-	SizeCorrection string  `csv:"Size Correction"`
-	Distance       float64 `csv:"Distance,omitempty"`
-	Age            string  `csv:"Age"`
-	Note           string  `csv:"Note"`
-	Flags          string  `csv:"Flags"`
-	ID             int     `csv:"ID,omitempty"`
-	ParentID       int     `csv:"ParentID,omitempty"`
+	Name           string            `csv:"Name"`
+	StartDate      AppStyleTimestamp `csv:"Start Date"`
+	StartOdometer  float64           `csv:"Start Odometer (mi.),omitempty"`
+	Size           string            `csv:"Size"`
+	SizeCorrection string            `csv:"Size Correction"`
+	Distance       float64           `csv:"Distance,omitempty"`
+	Age            string            `csv:"Age"`
+	Note           string            `csv:"Note"`
+	Flags          string            `csv:"Flags"`
+	ID             int               `csv:"ID,omitempty"`
+	ParentID       int               `csv:"ParentID,omitempty"`
 }
 
 // LogValue is the handler for [log.slog] to emit structured output for a
@@ -189,7 +230,7 @@ func (v TireRecord) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("name", v.Name),
 		slog.Float64("startOdometer", v.StartOdometer),
-		slog.String("startDate", v.StartDate),
+		slog.String("startDate", v.StartDate.Raw()),
 		slog.Float64("distance", v.Distance),
 	)
 }
@@ -201,12 +242,12 @@ func (v TireRecord) LogValue() slog.Value {
 // A file will contain zero or more Valuation records in the VALUATIONS section
 // of the file.
 type ValuationRecord struct {
-	Type     string  `csv:"Type"`
-	Date     string  `csv:"Date"`
-	Odometer float64 `csv:"Odometer,omitempty"`
-	Price    string  `csv:"Price"`
-	Notes    string  `csv:"Notes"`
-	Flags    string  `csv:"Flags"`
+	Type     string            `csv:"Type"`
+	Date     AppStyleTimestamp `csv:"Date"`
+	Odometer float64           `csv:"Odometer,omitempty"`
+	Price    string            `csv:"Price"`
+	Notes    string            `csv:"Notes"`
+	Flags    string            `csv:"Flags"`
 }
 
 // LogValue is the handler for [log.slog] to emit structured output for a
@@ -214,7 +255,7 @@ type ValuationRecord struct {
 func (v ValuationRecord) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("type", v.Type),
-		slog.String("date", v.Date),
+		slog.String("date", v.Date.Raw()),
 		slog.Float64("odometer", v.Odometer),
 		slog.String("price", v.Price),
 		slog.String("flags", v.Flags),

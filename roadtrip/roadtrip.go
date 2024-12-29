@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"os"
 	"reflect"
-	"time"
 
 	cvslib "github.com/tiendc/go-csvlib"
 )
@@ -252,18 +251,4 @@ func (v *Vehicle) UnmarshalRoadtrip(data RawFileData) error {
 	)
 
 	return nil
-}
-
-// ParseDate parses a Road Trip styled date string and turns it into a proper
-// Go [time.Time] value.
-func ParseDate(dateString string) (time.Time, error) {
-	t, err := time.Parse("2006-1-2 15:04", dateString)
-	if err != nil {
-		t, err = time.Parse("2006-1-2", dateString)
-		if err != nil {
-			return time.Time{}, fmt.Errorf("unable to parse date '%s': %w", dateString, err)
-		}
-	}
-
-	return t, nil
 }
