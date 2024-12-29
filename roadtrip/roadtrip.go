@@ -14,10 +14,21 @@ import (
 )
 
 const (
+	// Supported Road Trip vehicle data file version "1500,en" only.
+	SupportedVersion int = 1500
+
 	// Remove erroneous header fields for VEHICLE section
 	// per Darren Stone 2024-12-09 via email.
 	RemoveErroneousHeaders = true
 )
+
+// RawFileData contains the raw contents read from a single Road Trip data
+// file.
+type RawFileData []byte
+
+// RawSectionData contains the raw contents read from a single section of a
+// single Road Trip data file.
+type RawSectionData []byte
 
 // VehicleOptions contain the options to be used when creating a new Vehicle object.
 type VehicleOptions struct {
@@ -25,7 +36,7 @@ type VehicleOptions struct {
 	LogLevel slog.Level
 }
 
-// A Vehicle holds the parsed sections contained in a Road Trip CSV backup file.
+// A Vehicle holds the parsed sections contained in a Road Trip vehicle data file.
 type Vehicle struct {
 	Delimiters         string
 	Version            int
@@ -37,37 +48,51 @@ type Vehicle struct {
 	Trips              []TripRecord        `roadtrip:"ROAD TRIPS"`
 	Tires              []TireRecord        `roadtrip:"TIRE LOG"`
 	Valuations         []ValuationRecord   `roadtrip:"VALUATIONS"`
-	Raw                []byte
+	Raw                RawFileData
 	logger             *slog.Logger
 	logLevel           slog.Level
 }
 
-func UnmarshalRoadtripSection(data []byte, target any) error {
-	header, err := SectionHeader(target)
-	if err != nil {
-		return err
+// NewVehicle returns a new, empty [Vehicle] object.
+func NewVehicle(options VehicleOptions) Vehicle {
+	var v Vehicle
+
+	if options.Logger == nil {
+		options.Logger = slog.New(slog.NewTextHandler(nil, nil))
 	}
 
-	sectionData := GetSectionContents(data, header)
+	v.logger = options.Logger
+	v.logLevel = options.LogLevel
 
-	_, err = cvslib.Unmarshal(sectionData, target)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return v
 }
+
+// NewVehicleFromFile returns a new [Vehicle] object populated with data read
+// and parsed from the file.
+func NewVehicleFromFile(filename string, options VehicleOptions) (Vehicle, error) {
+	v := NewVehicle(options)
+
+	err := v.LoadFile(filename)
+	if err != nil {
+		return v, err
+	}
+
+	return v, nil
+}
+
+// SetLogger optionally binds an [slog.Logger] to the [Vehicle] instance for
 
 // Each Road Trip "CSV" file is actually multiple, independent blocks of CSV
 // data delimited by two newlines and a section header string in all capital
 // letters.
 //
 // SectionHeaderList returns a slice of strings corresponding to each of the
-// section headers found in the Road Trip data file. Currently this package
-// only supports Language "en" (see known issues in the README.md file).
+// section headers expected in the Road Trip vehicle data file. Currently this
+// package only supports Language "en" (see known issues in the README.md
+// file).
 //
-// This list is built by inspecting the `roadtrip` struct tags present in
-// the [Vehicle] struct definition.
+// This list is built by inspecting the `roadtrip` struct tags present in the
+// [Vehicle] struct definition.
 func SectionHeaderList() []string {
 	var headerList []string
 
@@ -83,10 +108,10 @@ func SectionHeaderList() []string {
 	return headerList
 }
 
-// SectionHeader will return the section header for any suitable target field
-// in the [Vehicle] struct. It's used to identify the correct CSV block in the
-// Road Trip CSV file.
-func SectionHeader(target any) (string, error) {
+// SectionHeaderForTarget will return the section header for any suitable
+// target field in the [Vehicle] struct. It's used to identify the correct CSV
+// block in the Road Trip vehicle data file.
+func SectionHeaderForTarget(target any) (string, error) {
 	targetType := reflect.TypeOf(target).Elem()
 
 	vt := reflect.TypeOf(Vehicle{})
@@ -103,36 +128,59 @@ func SectionHeader(target any) (string, error) {
 	return "", fmt.Errorf("cannot unmarshal %s, missing roadtrip struct tag", targetType)
 }
 
-// New returns a new, empty [Vehicle] with a no-op logger.
-func NewVehicle(options VehicleOptions) Vehicle {
-	var v Vehicle
+// GetSectionContents evaluates the raw content from a Road Trip data file and extracts only
+// the single section block identified by the supplied section header string value.
+func (fileData *RawFileData) GetSectionContents(sectionHeader string) RawSectionData {
+	sectionStart := make(map[string]int)
 
-	if options.Logger == nil {
-		options.Logger = slog.New(slog.NewTextHandler(nil, nil))
+	dataBytes := reflect.ValueOf(fileData).Bytes()
+
+	for _, element := range SectionHeaderList() {
+		i := bytes.Index(dataBytes, []byte(element))
+		sectionStart[element] = i
 	}
 
-	v.logger = options.Logger
-	v.logLevel = options.LogLevel
+	startPosition := sectionStart[sectionHeader]
+	endPosition := len(dataBytes)
 
-	return v
+	for _, e := range sectionStart {
+		if e > startPosition && e < endPosition {
+			endPosition = e - 1
+		}
+	}
+
+	// Don't include the section header line in the outbuf
+	startPosition = startPosition + len(sectionHeader) + 1
+
+	outbuf := dataBytes[startPosition:endPosition]
+
+	return outbuf
 }
 
-// NewFromFile returns a new [Vehicle] populated with data read and parsed
-// from the file.
-func NewVehicleFromFile(filename string, options VehicleOptions) (Vehicle, error) {
-	v := NewVehicle(options)
-
-	err := v.LoadFile(filename)
+// UnmarshalRoadtripSection takes the raw contents of a Road Trip vehicle data
+// file, extracts only the relevant section block, and then parses it into
+// appropriate struct field based on the type of the target variable.
+//
+// This relies on an accurate struct tag on the [Vehicle] field in question
+// which instructs the function on which section header line to look for.
+func (fileData *RawFileData) UnmarshalRoadtripSection(target any) error {
+	header, err := SectionHeaderForTarget(target)
 	if err != nil {
-		return v, err
+		return err
 	}
 
-	return v, nil
+	sectionData := fileData.GetSectionContents(header)
+
+	_, err = cvslib.Unmarshal(sectionData, target)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-// SetLogger optionally binds an [slog.Logger] to a [Vehicle] for internal
-// package debugging. If you do not call SetLogger, log output will be
-// discarded during package operation.
+// SetLogger optionally sets the [Vehicle] logger for internal package
+// debugging.
 func (v *Vehicle) SetLogger(l *slog.Logger) {
 	v.logger = l
 	v.logLevel = slog.LevelInfo
@@ -145,7 +193,7 @@ func (v *Vehicle) SetLogLoggerLevel(levelInfo slog.Level) slog.Level {
 	return slog.SetLogLoggerLevel(levelInfo)
 }
 
-// LogValue is the handler for [log.slog] to emit structured output for a
+// LogValue is the handler for [log.slog] to emit structured output for the
 // [Vehicle] object when logging.
 func (v *Vehicle) LogValue() slog.Value {
 	var value slog.Value
@@ -167,8 +215,10 @@ func (v *Vehicle) LogValue() slog.Value {
 	return value
 }
 
-// LoadFile reads and parses a file into a [Vehicle] variable.
+// LoadFile reads and parses a file into the [Vehicle] object.
 func (v *Vehicle) LoadFile(filename string) error {
+	var buf RawFileData
+
 	buf, err := os.ReadFile(filename)
 	if err != nil {
 		return err
@@ -184,7 +234,9 @@ func (v *Vehicle) LoadFile(filename string) error {
 	return v.UnmarshalRoadtrip(buf)
 }
 
-func (v *Vehicle) UnmarshalRoadtrip(data []byte) error {
+// UnmarshalRoadtrip takes the raw contents of a Road Trip data file and
+// and populates the [Vehicle] object.
+func (v *Vehicle) UnmarshalRoadtrip(data RawFileData) error {
 	v.Raw = data
 
 	var err error
@@ -198,13 +250,13 @@ func (v *Vehicle) UnmarshalRoadtrip(data []byte) error {
 	targets = append(targets, &v.Valuations)
 
 	for _, target := range targets {
-		err = UnmarshalRoadtripSection(data, target)
+		err = data.UnmarshalRoadtripSection(target)
 		if err != nil {
 			return fmt.Errorf("unable to parse %s: %w", target, err)
 		}
 	}
 
-	v.logger.Info("Loaded Road Trip CSV",
+	v.logger.Info("Loaded Road Trip vehicle data file",
 		"filename", v.Filename,
 		"bytes", len(data),
 		"vehicleRecords", len(v.Vehicles),
@@ -216,33 +268,6 @@ func (v *Vehicle) UnmarshalRoadtrip(data []byte) error {
 	)
 
 	return nil
-}
-
-// Section returns a byte slice containing the raw contents of the specified section
-// from the corresponding [Vehicle.Raw] object.
-func GetSectionContents(data []byte, sectionHeader string) []byte {
-	sectionStart := make(map[string]int)
-
-	for _, element := range SectionHeaderList() {
-		i := bytes.Index(data, []byte(element))
-		sectionStart[element] = i
-	}
-
-	startPosition := sectionStart[sectionHeader]
-	endPosition := len(data)
-
-	for _, e := range sectionStart {
-		if e > startPosition && e < endPosition {
-			endPosition = e - 1
-		}
-	}
-
-	// Don't include the section header line in the outbuf
-	startPosition = startPosition + len(sectionHeader) + 1
-
-	outbuf := data[startPosition:endPosition]
-
-	return outbuf
 }
 
 // ParseDate parses a Road Trip styled date string and turns it into a proper
