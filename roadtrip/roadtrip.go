@@ -80,8 +80,6 @@ func NewVehicleFromFile(filename string, options VehicleOptions) (Vehicle, error
 	return v, nil
 }
 
-// SetLogger optionally binds an [slog.Logger] to the [Vehicle] instance for
-
 // Each Road Trip "CSV" file is actually multiple, independent blocks of CSV
 // data delimited by two newlines and a section header string in all capital
 // letters.
