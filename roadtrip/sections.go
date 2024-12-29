@@ -144,7 +144,6 @@ type VehicleRecord struct {
 //
 // A file will contain zero or more Tire records in the TIRE LOG section of the
 // file.
-
 type TireRecord struct {
 	Name           string `csv:"Name"`
 	StartDate      string `csv:"Start Date"`
