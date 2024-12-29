@@ -51,6 +51,29 @@ type Vehicle struct {
 	logger             *slog.Logger
 }
 
+// LogValue is the handler for [log.slog] to emit structured output for the
+// [Vehicle] object when logging.
+func (v Vehicle) LogValue() slog.Value {
+	var value slog.Value
+
+	if len(v.Vehicles) == 1 {
+		value = slog.GroupValue(
+			slog.String("name", v.Vehicles[0].Name),
+			slog.Int("version", v.Version),
+			slog.String("filename", v.Filename),
+			slog.Int("filesize", len(v.Raw)),
+			slog.Int("vehicles", len(v.Vehicles)),
+			slog.Int("fuelRecords", len(v.FuelRecords)),
+			slog.Int("mainteanceRecords", len(v.MaintenanceRecords)),
+			slog.Int("trips", len(v.Trips)),
+			slog.Int("tires", len(v.Tires)),
+			slog.Int("valuations", len(v.Valuations)),
+		)
+	}
+
+	return value
+}
+
 // NewVehicle returns a new, empty [Vehicle] object.
 func NewVehicle(options VehicleOptions) Vehicle {
 	var v Vehicle
@@ -180,22 +203,6 @@ func (v *Vehicle) SetLogger(l *slog.Logger) {
 	v.logger = l
 }
 
-// LogValue is the handler for [log.slog] to emit structured output for the
-// [Vehicle] object when logging.
-func (v *Vehicle) LogValue() slog.Value {
-	var value slog.Value
-
-	if len(v.Vehicles) == 1 {
-		value = slog.GroupValue(
-			slog.String("name", v.Vehicles[0].Name),
-			slog.Int("version", v.Version),
-			slog.String("filename", v.Filename),
-		)
-	}
-
-	return value
-}
-
 // LoadFile reads and parses a file into the [Vehicle] object.
 func (v *Vehicle) LoadFile(filename string) error {
 	var buf RawFileData
@@ -241,14 +248,7 @@ func (v *Vehicle) UnmarshalRoadtrip(data RawFileData) error {
 	}
 
 	v.logger.Debug("Loaded Road Trip vehicle data file",
-		"filename", v.Filename,
-		"bytes", len(data),
-		"vehicleRecords", len(v.Vehicles),
-		"fuelRecords", len(v.FuelRecords),
-		"mainteanceRecords", len(v.MaintenanceRecords),
-		"trips", len(v.Trips),
-		"tireLogs", len(v.Tires),
-		"valuations", len(v.Valuations),
+		"vehicle", v,
 	)
 
 	return nil

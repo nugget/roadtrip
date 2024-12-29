@@ -1,7 +1,6 @@
 package roadtrip
 
 import (
-	"fmt"
 	"log/slog"
 )
 
@@ -43,21 +42,13 @@ type FuelRecord struct {
 
 // LogValue is the handler for [log.slog] to emit structured output for a
 // [FuelRecord] object when logging.
-func (f *FuelRecord) LogValue() slog.Value {
+func (v FuelRecord) LogValue() slog.Value {
 	return slog.GroupValue(
-		slog.Float64("odometer", f.Odometer),
-		slog.String("date", f.Date),
-		slog.String("location", f.Location),
-		slog.Float64("totalPrice", f.TotalPrice),
+		slog.Float64("odometer", v.Odometer),
+		slog.String("date", v.Date),
+		slog.String("location", v.Location),
+		slog.Float64("totalPrice", v.TotalPrice),
 	)
-}
-
-// [FuelRecord.Odometer] is considered the primary key for a [FuelRecord]
-// variable. Two [FuelRecord] variables are considered equal as long as the odometer
-// values match. No other fields in the struct are used to disimbaguate between
-// records.
-func (f *FuelRecord) PrimaryKey() string {
-	return fmt.Sprintf("%07d", int64(f.Odometer))
 }
 
 // A MaintenceRecord is a single CSV row from the Road Trip data file and
@@ -78,7 +69,7 @@ type MaintenanceRecord struct {
 	Payment              string  `csv:"Payment"`
 	Categories           string  `csv:"Categories"`
 	ReminderInterval     string  `csv:"Reminder Interval"`
-	ReminderDistance     string  `csv:"Reminder Distance"`
+	ReminderDistance     float64 `csv:"Reminder Distance,omitempty"`
 	Flags                string  `csv:"Flags"`
 	CurrencyCode         int     `csv:"Currency Code,omitempty"`
 	CurrencyRate         int     `csv:"Currency Rate,omitempty"`
@@ -86,7 +77,19 @@ type MaintenanceRecord struct {
 	Longitude            float64 `csv:"Longitude,omitempty"`
 	ID                   int     `csv:"ID,omitempty"`
 	NotificationInterval string  `csv:"Notification Interval"`
-	NotificationDistance string  `csv:"Notification Distance"`
+	NotificationDistance float64 `csv:"Notification Distance,omitempty"`
+}
+
+// LogValue is the handler for [log.slog] to emit structured output for a
+// [MaintenanceRecord] object when logging.
+func (v MaintenanceRecord) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Float64("odometer", v.Odometer),
+		slog.String("date", v.Date),
+		slog.String("description", v.Description),
+		slog.String("location", v.Location),
+		slog.Float64("Cost", v.Cost),
+	)
 }
 
 // A TripRecord  is a single CSV row from the Road Trip data file and
@@ -108,6 +111,17 @@ type TripRecord struct {
 	Type          string  `csv:"Type"`
 	Categories    string  `csv:"Categories"`
 	Flags         string  `csv:"Flags"`
+}
+
+// LogValue is the handler for [log.slog] to emit structured output for a
+// [TripRecord] object when logging.
+func (v TripRecord) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Float64("startOdometer", v.StartOdometer),
+		slog.String("startDate", v.StartDate),
+		slog.String("note", v.Note),
+		slog.Float64("distance", v.Distance),
+	)
 }
 
 // A VehicleRecord is a single CSV row from the Road Trip data file and
@@ -136,6 +150,17 @@ type VehicleRecord struct {
 	Tank2Units          string  `csv:"Tank 2 Units,optional"`
 }
 
+// LogValue is the handler for [log.slog] to emit structured output for a
+// [VehicleRecord] object when logging.
+func (v VehicleRecord) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("name", v.Name),
+		slog.String("odometer", v.Odometer),
+	)
+}
+
+// A VehicleRecord is a single CSV row from the Road Trip data file and
+
 // A TireRecord is a single CSV row from the Road Trip data file and represents
 // a set of tires installed on the vehicle with all of its associated
 // attributes. It is date and odometer range bound with a start value for each
@@ -145,17 +170,28 @@ type VehicleRecord struct {
 // A file will contain zero or more Tire records in the TIRE LOG section of the
 // file.
 type TireRecord struct {
-	Name           string `csv:"Name"`
-	StartDate      string `csv:"Start Date"`
-	StartOdometer  int    `csv:"Start Odometer (mi.),omitempty"`
-	Size           string `csv:"Size"`
-	SizeCorrection string `csv:"Size Correction"`
-	Distance       int    `csv:"Distance,omitempty"`
-	Age            string `csv:"Age"`
-	Note           string `csv:"Note"`
-	Flags          string `csv:"Flags"`
-	ID             int    `csv:"ID,omitempty"`
-	ParentID       int    `csv:"ParentID,omitempty"`
+	Name           string  `csv:"Name"`
+	StartDate      string  `csv:"Start Date"`
+	StartOdometer  float64 `csv:"Start Odometer (mi.),omitempty"`
+	Size           string  `csv:"Size"`
+	SizeCorrection string  `csv:"Size Correction"`
+	Distance       float64 `csv:"Distance,omitempty"`
+	Age            string  `csv:"Age"`
+	Note           string  `csv:"Note"`
+	Flags          string  `csv:"Flags"`
+	ID             int     `csv:"ID,omitempty"`
+	ParentID       int     `csv:"ParentID,omitempty"`
+}
+
+// LogValue is the handler for [log.slog] to emit structured output for a
+// [TireRecord] object when logging.
+func (v TireRecord) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("name", v.Name),
+		slog.Float64("startOdometer", v.StartOdometer),
+		slog.String("startDate", v.StartDate),
+		slog.Float64("distance", v.Distance),
+	)
 }
 
 // A ValuationRecord is a single CSV row from the Road Trip data file and
@@ -165,10 +201,22 @@ type TireRecord struct {
 // A file will contain zero or more Valuation records in the VALUATIONS section
 // of the file.
 type ValuationRecord struct {
-	Type     string `csv:"Type"`
-	Date     string `csv:"Date"`
-	Odometer int    `csv:"Odometer,omitempty"`
-	Price    string `csv:"Price"`
-	Notes    string `csv:"Notes"`
-	Flags    string `csv:"Flags"`
+	Type     string  `csv:"Type"`
+	Date     string  `csv:"Date"`
+	Odometer float64 `csv:"Odometer,omitempty"`
+	Price    string  `csv:"Price"`
+	Notes    string  `csv:"Notes"`
+	Flags    string  `csv:"Flags"`
+}
+
+// LogValue is the handler for [log.slog] to emit structured output for a
+// [ValuationRecord] object when logging.
+func (v ValuationRecord) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("type", v.Type),
+		slog.String("date", v.Date),
+		slog.Float64("odometer", v.Odometer),
+		slog.String("price", v.Price),
+		slog.String("flags", v.Flags),
+	)
 }
