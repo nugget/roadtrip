@@ -235,12 +235,15 @@ func (v *Vehicle) LoadFile(filename string) error {
 }
 
 // UnmarshalRoadtrip takes the raw contents of a Road Trip data file and
-// and populates the [Vehicle] object.
+// and populates the [Vehicle] object with what it finds inside.
 func (v *Vehicle) UnmarshalRoadtrip(data RawFileData) error {
 	v.Raw = data
 
 	var err error
 
+	// This seems ripe for future improvement, it should be possible
+	// to generate the targets array by reflecting through v and finding
+	// the correct pointers to append.
 	var targets []any
 	targets = append(targets, &v.Vehicles)
 	targets = append(targets, &v.FuelRecords)
