@@ -8,7 +8,6 @@ import (
 	"log/slog"
 	"os"
 	"reflect"
-	"time"
 
 	cvslib "github.com/tiendc/go-csvlib"
 )
@@ -32,8 +31,7 @@ type RawSectionData []byte
 
 // VehicleOptions contain the options to be used when creating a new Vehicle object.
 type VehicleOptions struct {
-	Logger   *slog.Logger
-	LogLevel slog.Level
+	Logger *slog.Logger
 }
 
 // A Vehicle holds the parsed sections contained in a Road Trip vehicle data file.
@@ -50,7 +48,29 @@ type Vehicle struct {
 	Valuations         []ValuationRecord   `roadtrip:"VALUATIONS"`
 	Raw                RawFileData
 	logger             *slog.Logger
-	logLevel           slog.Level
+}
+
+// LogValue is the handler for [log.slog] to emit structured output for the
+// [Vehicle] object when logging.
+func (v Vehicle) LogValue() slog.Value {
+	var value slog.Value
+
+	if len(v.Vehicles) == 1 {
+		value = slog.GroupValue(
+			slog.String("name", v.Vehicles[0].Name),
+			slog.Int("version", v.Version),
+			slog.String("filename", v.Filename),
+			slog.Int("filesize", len(v.Raw)),
+			slog.Int("vehicles", len(v.Vehicles)),
+			slog.Int("fuelRecords", len(v.FuelRecords)),
+			slog.Int("mainteanceRecords", len(v.MaintenanceRecords)),
+			slog.Int("trips", len(v.Trips)),
+			slog.Int("tires", len(v.Tires)),
+			slog.Int("valuations", len(v.Valuations)),
+		)
+	}
+
+	return value
 }
 
 // NewVehicle returns a new, empty [Vehicle] object.
@@ -62,7 +82,6 @@ func NewVehicle(options VehicleOptions) Vehicle {
 	}
 
 	v.logger = options.Logger
-	v.logLevel = options.LogLevel
 
 	return v
 }
@@ -181,36 +200,6 @@ func (fileData *RawFileData) UnmarshalRoadtripSection(target any) error {
 // debugging.
 func (v *Vehicle) SetLogger(l *slog.Logger) {
 	v.logger = l
-	v.logLevel = slog.LevelInfo
-}
-
-// SetLogLoggerLevel optionally sets the [Vehicle] logger level for internal
-// package debugging.
-func (v *Vehicle) SetLogLoggerLevel(levelInfo slog.Level) slog.Level {
-	v.logLevel = levelInfo
-	return slog.SetLogLoggerLevel(levelInfo)
-}
-
-// LogValue is the handler for [log.slog] to emit structured output for the
-// [Vehicle] object when logging.
-func (v *Vehicle) LogValue() slog.Value {
-	var value slog.Value
-
-	if len(v.Vehicles) == 1 {
-		if v.logLevel > -slog.LevelInfo {
-			value = slog.GroupValue(
-				slog.String("name", v.Vehicles[0].Name),
-			)
-		} else {
-			value = slog.GroupValue(
-				slog.String("name", v.Vehicles[0].Name),
-				slog.Int("version", v.Version),
-				slog.String("filename", v.Filename),
-			)
-		}
-	}
-
-	return value
 }
 
 // LoadFile reads and parses a file into the [Vehicle] object.
@@ -257,30 +246,9 @@ func (v *Vehicle) UnmarshalRoadtrip(data RawFileData) error {
 		}
 	}
 
-	v.logger.Info("Loaded Road Trip vehicle data file",
-		"filename", v.Filename,
-		"bytes", len(data),
-		"vehicleRecords", len(v.Vehicles),
-		"fuelRecords", len(v.FuelRecords),
-		"mainteanceRecords", len(v.MaintenanceRecords),
-		"trips", len(v.Trips),
-		"tireLogs", len(v.Tires),
-		"valuations", len(v.Valuations),
+	v.logger.Debug("Loaded Road Trip vehicle data file",
+		"vehicle", v,
 	)
 
 	return nil
-}
-
-// ParseDate parses a Road Trip styled date string and turns it into a proper
-// Go [time.Time] value.
-func ParseDate(dateString string) (time.Time, error) {
-	t, err := time.Parse("2006-1-2 15:04", dateString)
-	if err != nil {
-		t, err = time.Parse("2006-1-2", dateString)
-		if err != nil {
-			return time.Time{}, fmt.Errorf("unable to parse date '%s': %w", dateString, err)
-		}
-	}
-
-	return t, nil
 }

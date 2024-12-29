@@ -9,9 +9,27 @@ import (
 	"github.com/nugget/roadtrip-go/roadtrip"
 )
 
-func main() {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+var (
+	logger   *slog.Logger
+	logLevel *slog.LevelVar
+)
+
+func setupLogs() {
+	logLevel = new(slog.LevelVar)
+	logLevel.Set(slog.LevelInfo)
+
+	handlerOptions := &slog.HandlerOptions{
+		Level: logLevel,
+	}
+
+	logger = slog.New(slog.NewTextHandler(os.Stdout, handlerOptions))
+
 	slog.SetDefault(logger)
+	slog.SetLogLoggerLevel(slog.LevelInfo)
+}
+
+func main() {
+	setupLogs()
 
 	var debugMode = flag.Bool("v", false, "Verbose logging")
 	var filename = flag.String("file", "", "Road Trip vehicle CSV file")
@@ -24,13 +42,13 @@ func main() {
 	}
 
 	options := roadtrip.VehicleOptions{
-		Logger:   logger,
-		LogLevel: slog.LevelInfo,
+		Logger: logger,
 	}
 
 	if *debugMode {
 		// AddSource: true here
-		options.LogLevel = slog.LevelDebug
+		slog.SetLogLoggerLevel(slog.LevelDebug)
+		logLevel.Set(slog.LevelDebug)
 	}
 
 	// Create a [roadtrip.Vehicle] object with contents from a Road Trip data file.
@@ -42,13 +60,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	// logger.Info("Loaded vehicle", "vehicle", vehicle)
+	logger.Info("Loaded vehicle", "vehicle", vehicle)
 
 	totalFuelCost := 0.00
 
-	for _, f := range vehicle.FuelRecords {
+	for i, f := range vehicle.FuelRecords {
+		logger.Debug("Fuel Record",
+			"index", i,
+			"fuel", f,
+		)
 		totalFuelCost += f.TotalPrice
 	}
 
+	fmt.Printf("%s\n", vehicle.Vehicles[0].Name)
 	fmt.Printf("Spent %0.02f on fuel in %d fillups\n", totalFuelCost, len(vehicle.FuelRecords))
 }

@@ -209,7 +209,7 @@ linters-settings:
     # - "default": report only the default slog logger
     # https://github.com/go-simpler/sloglint?tab=readme-ov-file#no-global
     # Default: ""
-    no-global: "all"
+    no-global: "default"
     # Enforce using methods that accept a context.
     # Values:
     # - "": disabled
