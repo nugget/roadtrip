@@ -1,21 +1,8 @@
-// Package roadtrip implements utility routines for reading the CSV backup
-// files created by the iOS Road Trip MPG application.
 package roadtrip
 
 import (
 	"fmt"
 	"log/slog"
-)
-
-const (
-	// Supported Road Trip Data File version "1500,en" only.
-	SupportedVersion int64 = 1500
-)
-
-const (
-	Date       = "date"
-	Location   = "location"
-	TotalPrice = "totalPrice"
 )
 
 // A FuelRecord contains a single fuel CSV row from the underlying Road Trip
