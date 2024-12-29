@@ -32,8 +32,7 @@ type RawSectionData []byte
 
 // VehicleOptions contain the options to be used when creating a new Vehicle object.
 type VehicleOptions struct {
-	Logger   *slog.Logger
-	LogLevel slog.Level
+	Logger *slog.Logger
 }
 
 // A Vehicle holds the parsed sections contained in a Road Trip vehicle data file.
@@ -50,7 +49,6 @@ type Vehicle struct {
 	Valuations         []ValuationRecord   `roadtrip:"VALUATIONS"`
 	Raw                RawFileData
 	logger             *slog.Logger
-	logLevel           slog.Level
 }
 
 // NewVehicle returns a new, empty [Vehicle] object.
@@ -62,7 +60,6 @@ func NewVehicle(options VehicleOptions) Vehicle {
 	}
 
 	v.logger = options.Logger
-	v.logLevel = options.LogLevel
 
 	return v
 }
@@ -181,14 +178,6 @@ func (fileData *RawFileData) UnmarshalRoadtripSection(target any) error {
 // debugging.
 func (v *Vehicle) SetLogger(l *slog.Logger) {
 	v.logger = l
-	v.logLevel = slog.LevelInfo
-}
-
-// SetLogLoggerLevel optionally sets the [Vehicle] logger level for internal
-// package debugging.
-func (v *Vehicle) SetLogLoggerLevel(levelInfo slog.Level) slog.Level {
-	v.logLevel = levelInfo
-	return slog.SetLogLoggerLevel(levelInfo)
 }
 
 // LogValue is the handler for [log.slog] to emit structured output for the
@@ -197,17 +186,11 @@ func (v *Vehicle) LogValue() slog.Value {
 	var value slog.Value
 
 	if len(v.Vehicles) == 1 {
-		if v.logLevel > -slog.LevelInfo {
-			value = slog.GroupValue(
-				slog.String("name", v.Vehicles[0].Name),
-			)
-		} else {
-			value = slog.GroupValue(
-				slog.String("name", v.Vehicles[0].Name),
-				slog.Int("version", v.Version),
-				slog.String("filename", v.Filename),
-			)
-		}
+		value = slog.GroupValue(
+			slog.String("name", v.Vehicles[0].Name),
+			slog.Int("version", v.Version),
+			slog.String("filename", v.Filename),
+		)
 	}
 
 	return value
@@ -257,7 +240,7 @@ func (v *Vehicle) UnmarshalRoadtrip(data RawFileData) error {
 		}
 	}
 
-	v.logger.Info("Loaded Road Trip vehicle data file",
+	v.logger.Debug("Loaded Road Trip vehicle data file",
 		"filename", v.Filename,
 		"bytes", len(data),
 		"vehicleRecords", len(v.Vehicles),
