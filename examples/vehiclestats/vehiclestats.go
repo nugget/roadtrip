@@ -78,19 +78,37 @@ func run(
 	}
 
 	logger.Info("Loaded vehicle", "vehicle", vehicle)
+	fmt.Printf("-- \n\n")
+	fmt.Printf("%s\n\n", vehicle.Vehicles[0].Name)
 
-	// Let's caclulate how much we've spent on fuel so far, starting at 0.
-	totalFuelCost := 0.00
+	var (
+		totalFuelCost float64
+		totalUnits    float64
+	)
 
 	for i, f := range vehicle.FuelRecords {
 		logger.Debug("Fuel Record", "index", i, "fuel", f)
 
 		totalFuelCost += f.TotalPrice
+		totalUnits += f.FillAmount
 	}
 
-	fmt.Printf("-- \n\n")
-	fmt.Printf("%s\n", vehicle.Vehicles[0].Name)
-	fmt.Printf("Spent %0.02f on fuel in %d fillups\n", totalFuelCost, len(vehicle.FuelRecords))
+	startOdometer := vehicle.FuelRecords[0].Odometer
+	endOdometer := vehicle.FuelRecords[len(vehicle.FuelRecords)-1].Odometer
+	totalMiles := endOdometer - startOdometer
+
+	fmt.Printf(" * Drove %.0f miles averaging %0.02f mpg\n",
+		totalMiles,
+		(totalMiles / totalUnits),
+	)
+
+	fmt.Printf(" * Spent $%0.02f on %0.0f gallons of fuel in %d fillups\n",
+		totalFuelCost,
+		totalUnits,
+		len(vehicle.FuelRecords),
+	)
+
+	fmt.Printf("\n")
 
 	return nil
 }
