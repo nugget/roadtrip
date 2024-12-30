@@ -62,21 +62,24 @@ func run(args []string) error {
 	// The roadtrip package will happily use your log/slog Logger if you have one.
 	options := roadtrip.VehicleOptions{Logger: logger}
 
-	// Create a [roadtrip.Vehicle] object with contents from a Road Trip data file.
+	// Create a [Vehicle] object with contents from a Road Trip data file.
 	vehicle, err := roadtrip.NewVehicleFromFile(*filename, options)
 	if err != nil {
 		return err
 	}
 
-	logger.Info("Loaded vehicle", "vehicle", vehicle)
-	fmt.Printf("-- \n\n")
-	fmt.Printf("%s\n\n", vehicle.Vehicles[0].Name)
+	// https://pkg.go.dev/github.com/nugget/roadtrip-go/roadtrip#Vehicle
+	logger.Debug("Loaded vehicle", "vehicle", vehicle)
+
+	// TODO: Better interface for Vehicles[0] fields.
+	fmt.Printf("\n\n%s\n\n", vehicle.Vehicles[0].Name)
 
 	var (
 		totalFuelCost float64
 		totalUnits    float64
 	)
 
+	// https://pkg.go.dev/github.com/nugget/roadtrip-go/roadtrip#FuelRecord
 	for i, f := range vehicle.FuelRecords {
 		logger.Debug("Fuel Record",
 			"index", i,
@@ -89,8 +92,11 @@ func run(args []string) error {
 
 	startOdometer := vehicle.FuelRecords[0].Odometer
 	endOdometer := vehicle.FuelRecords[len(vehicle.FuelRecords)-1].Odometer
+
 	totalMiles := endOdometer - startOdometer
 
+	// TODO: Support km, L, and km/L.
+	// numbers are correct, my labels are just hard-coded here
 	fmt.Printf(" * Drove %.0f miles averaging %0.02f mpg\n",
 		totalMiles,
 		(totalMiles / totalUnits),
