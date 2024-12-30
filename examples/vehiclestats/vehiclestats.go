@@ -1,10 +1,9 @@
 package main
 
 import (
-	"context"
+	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"log/slog"
 	"os"
 
@@ -36,17 +35,10 @@ func setupLogs(verboseLogs *bool) {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 		logLevel.Set(slog.LevelDebug)
 	}
-
-	return
 }
 
 // run is the real main, but one where we can exit with an error.
-func run(
-	ctx context.Context,
-	stdout io.Writer,
-	getenv func(string) string,
-	args []string,
-) error {
+func run(args []string) error {
 	myFlags := flag.NewFlagSet("myFlags", flag.ExitOnError)
 
 	var verboseLogs = myFlags.Bool("v", false, "Verbose logging")
@@ -56,12 +48,11 @@ func run(
 	if err != nil {
 		return err
 	}
-	args = myFlags.Args()
 
 	setupLogs(verboseLogs)
 
 	if *filename == "" {
-		return fmt.Errorf("no filename provided (--file)")
+		return errors.New("no filename provided (--file)")
 	}
 
 	//
@@ -87,7 +78,10 @@ func run(
 	)
 
 	for i, f := range vehicle.FuelRecords {
-		logger.Debug("Fuel Record", "index", i, "fuel", f)
+		logger.Debug("Fuel Record",
+			"index", i,
+			"fuel", f,
+		)
 
 		totalFuelCost += f.TotalPrice
 		totalUnits += f.FillAmount
@@ -115,13 +109,7 @@ func run(
 
 // main does as little as we can get away with.
 func main() {
-	ctx := context.Background()
-	if err := run(
-		ctx,
-		os.Stdout,
-		os.Getenv,
-		os.Args,
-	); err != nil {
+	if err := run(os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}
